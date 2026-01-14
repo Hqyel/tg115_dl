@@ -1,0 +1,7 @@
+[
+  {
+    "channel": "all",
+    "mode": "incremental",
+    "interval_hours": 1
+  }
+]

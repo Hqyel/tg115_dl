@@ -386,15 +386,48 @@
                         <div class="lg:hidden space-y-3">
                             <div v-for="item in resources" :key="item.message_id"
                                 class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                                <div class="flex items-start justify-between mb-2">
-                                    <h4 class="font-medium flex-1 mr-2">{{ item.title }}</h4>
-                                    <span v-if="item.pan_url && item.pan_url !== 'N/A'"
-                                        class="text-emerald-500">✓</span>
-                                    <span v-else class="text-amber-400">○</span>
+                                <div class="flex items-start gap-3 mb-3">
+                                    <div :class="['w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', 
+                                                  item.pan_url && item.pan_url !== 'N/A' 
+                                                    ? 'bg-emerald-100 dark:bg-emerald-900/30' 
+                                                    : 'bg-amber-100 dark:bg-amber-900/30']">
+                                        <img v-if="item.pan_url && item.pan_url !== 'N/A'"
+                                            src="https://unpkg.com/lucide-static@latest/icons/check.svg"
+                                            class="w-5 h-5 text-emerald-600">
+                                        <img v-else src="https://unpkg.com/lucide-static@latest/icons/clock.svg"
+                                            class="w-5 h-5 text-amber-600">
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="font-medium text-sm leading-snug line-clamp-2">{{ item.title }}</h4>
+                                        <p v-if="item.tags"
+                                            class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{{
+                                            item.tags }}</p>
+                                    </div>
                                 </div>
-                                <div v-if="item.tags" class="text-xs text-slate-500 mb-3 truncate">{{ item.tags }}</div>
-                                <button v-if="item.pan_url && item.pan_url !== 'N/A'" @click="copyLink(item.pan_url)"
-                                    class="w-full h-9 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm">复制链接</button>
+                                <div class="flex gap-2">
+                                    <button v-if="item.pan_url && item.pan_url !== 'N/A'"
+                                        @click="copyLink(item.pan_url)"
+                                        class="flex-1 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium flex items-center justify-center gap-2">
+                                        <img src="https://unpkg.com/lucide-static@latest/icons/copy.svg"
+                                            class="w-4 h-4 invert">
+                                        复制链接
+                                    </button>
+                                    <a v-if="item.pan_url && item.pan_url !== 'N/A'" :href="item.pan_url"
+                                        target="_blank"
+                                        class="h-10 px-4 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm flex items-center justify-center">
+                                        <img src="https://unpkg.com/lucide-static@latest/icons/external-link.svg"
+                                            class="w-4 h-4 opacity-60 dark:invert">
+                                    </a>
+                                    <span v-if="!item.pan_url || item.pan_url === 'N/A'"
+                                        class="flex-1 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-400 text-sm flex items-center justify-center">
+                                        暂无链接
+                                    </span>
+                                </div>
+                            </div>
+                            <div v-if="resources.length === 0" class="text-center py-12 text-slate-400">
+                                <img src="https://unpkg.com/lucide-static@latest/icons/inbox.svg"
+                                    class="w-12 h-12 mx-auto opacity-30 dark:invert mb-3">
+                                暂无数据
                             </div>
                         </div>
 
