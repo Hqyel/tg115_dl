@@ -2,6 +2,7 @@
   {
     "channel": "all",
     "mode": "incremental",
-    "interval_hours": 1
+    "interval_hours": 1,
+    "next_run": null
   }
 ]

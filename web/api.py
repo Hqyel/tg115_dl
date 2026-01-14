@@ -135,26 +135,29 @@ def add_scheduled_job(channel_id: str, mode: str, interval_hours: int, next_run:
     name = f"同步 {CHANNELS.get(channel_id, {}).get('name', channel_id)} ({mode})"
 
   # 计算下次执行时间
+  next_run_time = None
   if next_run:
     try:
       next_run_time = datetime.fromisoformat(next_run)
-      # 如果保存的时间已过期，从当前时间开始计算
+      # 如果保存的时间已过期，不使用
       if next_run_time < datetime.now(next_run_time.tzinfo):
         next_run_time = None
     except:
       next_run_time = None
-  else:
-    next_run_time = None
 
-  scheduler.add_job(
-    func,
-    trigger=IntervalTrigger(hours=interval_hours),
-    id=job_id,
-    args=args,
-    name=name,
-    replace_existing=True,
-    next_run_time=next_run_time
-  )
+  # 创建任务，只有恢复保存的任务时才指定 next_run_time
+  job_kwargs = {
+    'func': func,
+    'trigger': IntervalTrigger(hours=interval_hours),
+    'id': job_id,
+    'args': args,
+    'name': name,
+    'replace_existing': True
+  }
+  if next_run_time:
+    job_kwargs['next_run_time'] = next_run_time
+
+  scheduler.add_job(**job_kwargs)
   save_tasks()
   return job_id
 
