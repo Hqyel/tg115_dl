@@ -327,7 +327,9 @@ createApp({
             tasks, newTask,
             logs, logFilter, loadLogs, clearLogs,
             showCardModal, cardModalHtml,
-
+            toggleTheme, login, logout, loadDashboard, doSearch, loadResources, copyLink, syncNow,
+            loadTasks, addTask, deleteTask, formatDate,
+            openCardPreview: (html) => { cardModalHtml.value = html; showCardModal.value = true; },
             closeCardPreview: () => { showCardModal.value = false; cardModalHtml.value = ''; },
             transferToCms
         };
