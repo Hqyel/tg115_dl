@@ -173,6 +173,7 @@ def search():
   resources = [{
     'channel_id': ch_id,
     'channel_name': CHANNELS[ch_id]['name'],
+    'channel_username': CHANNELS[ch_id]['url'].split('/')[-1],
     'message_id': r.message_id,
     'title': r.title,
     'tags': r.tags,
@@ -294,7 +295,7 @@ def get_sync_status():
 @api_bp.route('/channels', methods=['GET'])
 @login_required
 def get_channels():
-  channels = [{'id': ch_id, 'name': config['name'], 'parse_mode': config['parse_mode']}
+  channels = [{'id': ch_id, 'name': config['name'], 'parse_mode': config['parse_mode'], 'username': config['url'].split('/')[-1]}
               for ch_id, config in CHANNELS.items()]
   return jsonify({'channels': channels})
 
