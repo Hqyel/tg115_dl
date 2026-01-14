@@ -45,8 +45,36 @@ createApp({
         const logFilter = ref('');
 
         // 原始卡片预览
-        const showCardModal = ref(false);
         const cardModalHtml = ref('');
+        const showCardModal = ref(false);
+
+        // UI 交互 (Toast & Confirm)
+        const toasts = ref([]);
+        let toastIdCounter = 0;
+        const confirmDialog = ref({ show: false, title: '', message: '', resolve: null });
+
+        const showToast = (message, type = 'info') => {
+            const id = toastIdCounter++;
+            toasts.value.push({ id, message, type });
+            setTimeout(() => removeToast(id), 3000);
+        };
+
+        const removeToast = (id) => {
+            toasts.value = toasts.value.filter(t => t.id !== id);
+        };
+
+        const showConfirm = (title, message) => {
+            return new Promise((resolve) => {
+                confirmDialog.value = { show: true, title, message, resolve };
+            });
+        };
+
+        const handleConfirm = (result) => {
+            if (confirmDialog.value.resolve) {
+                confirmDialog.value.resolve(result);
+            }
+            confirmDialog.value.show = false;
+        };
 
         const isLoggedIn = computed(() => !!token.value);
         const syncRunning = computed(() => syncStatus.value.running);
@@ -278,10 +306,13 @@ createApp({
         async function clearLogs() {
             if (!confirm('确定清空所有日志？')) return;
             try {
-                await api('/logs', { method: 'DELETE' });
-                logs.value = [];
+                if (await showConfirm('确认清空', '确定要清空所有日志吗？此操作不可撤销。')) {
+                    await api('/logs', { method: 'DELETE' });
+                    logs.value = [];
+                    showToast('日志已清空', 'success');
+                }
             } catch (e) {
-                alert('清空失败: ' + e.message);
+                showToast('清空失败: ' + e.message, 'error');
             }
         }
 
@@ -308,12 +339,12 @@ createApp({
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    alert(`转存成功: ${data.message || '任务已添加'}`);
+                    showToast(`转存成功: ${data.message || '任务已添加'}`, 'success');
                 } else {
                     throw new Error(data.error || '请求失败');
                 }
             } catch (err) {
-                alert(`转存失败: ${err.message}`);
+                showToast(`转存失败: ${err.message}`, 'error');
             }
         };
 
@@ -327,6 +358,7 @@ createApp({
             tasks, newTask,
             logs, logFilter, loadLogs, clearLogs,
             showCardModal, cardModalHtml,
+            toasts, confirmDialog, showToast, removeToast, handleConfirm,
             toggleTheme, login, logout, loadDashboard, doSearch, loadResources, copyLink, syncNow,
             loadTasks, addTask, deleteTask, formatDate,
             openCardPreview: (html) => { cardModalHtml.value = html; showCardModal.value = true; },

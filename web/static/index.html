@@ -798,6 +798,69 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="/static/js/app.js"></script>
+    <!-- Toasts 通知组件 -->
+    <div class="fixed top-20 right-4 z-[90] flex flex-col gap-2 pointer-events-none">
+        <transition-group name="toast">
+            <div v-for="toast in toasts" :key="toast.id"
+                class="pointer-events-auto min-w-[300px] max-w-sm bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-100 dark:border-slate-700 p-4 flex items-start gap-3 transform transition-all duration-300"
+                :class="{
+                    'border-l-4 border-l-emerald-500': toast.type === 'success',
+                    'border-l-4 border-l-red-500': toast.type === 'error',
+                    'border-l-4 border-l-blue-500': toast.type === 'info'
+                }">
+                <div class="flex-shrink-0 mt-0.5">
+                    <img v-if="toast.type === 'success'"
+                        src="https://unpkg.com/lucide-static@latest/icons/check-circle.svg"
+                        class="w-5 h-5 text-emerald-500">
+                    <img v-else-if="toast.type === 'error'"
+                        src="https://unpkg.com/lucide-static@latest/icons/alert-circle.svg"
+                        class="w-5 h-5 text-red-500">
+                    <img v-else src="https://unpkg.com/lucide-static@latest/icons/info.svg"
+                        class="w-5 h-5 text-blue-500">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-800 dark:text-slate-200">{{ toast.message }}</p>
+                </div>
+                <button @click="removeToast(toast.id)"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    <img src="https://unpkg.com/lucide-static@latest/icons/x.svg" class="w-4 h-4">
+                </button>
+            </div>
+        </transition-group>
+    </div>
+
+    <!-- 确认对话框组件 -->
+    <div v-if="confirmDialog.show" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+        @click.self="handleConfirm(false)">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 transform transition-all">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{{ confirmDialog.title }}</h3>
+            <p class="text-slate-600 dark:text-slate-400 mb-6">{{ confirmDialog.message }}</p>
+            <div class="flex justify-end gap-3">
+                <button @click="handleConfirm(false)"
+                    class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors">
+                    取消
+                </button>
+                <button @click="handleConfirm(true)"
+                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 样式补充 -->
+    <style>
+        .toast-enter-active,
+        .toast-leave-active {
+            transition: all 0.3s ease;
+        }
+
+        .toast-enter-from,
+        .toast-leave-to {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+    </style>
 </body>
 
 </html>
