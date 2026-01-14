@@ -18,6 +18,10 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        [v-cloak] {
+            display: none !important;
+        }
+
         .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -33,7 +37,7 @@
 
 <body
     class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-300">
-    <div id="app">
+    <div id="app" v-cloak>
         <!-- 登录页面 -->
         <div v-if="!isLoggedIn" class="min-h-screen flex">
             <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
