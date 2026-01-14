@@ -294,6 +294,29 @@ createApp({
             }
         });
 
+        // 转存到 CMS
+        const transferToCms = async (url) => {
+            if (!url || url === 'N/A') return;
+            try {
+                const res = await fetch('/api/transfer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token.value}`
+                    },
+                    body: JSON.stringify({ url })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(`转存成功: ${data.message || '任务已添加'}`);
+                } else {
+                    throw new Error(data.error || '请求失败');
+                }
+            } catch (err) {
+                alert(`转存失败: ${err.message}`);
+            }
+        };
+
         return {
             isLoggedIn, username, currentPage, loading, error, loginForm, isDark,
             sidebarOpen, sidebarCollapsed,
@@ -305,44 +328,8 @@ createApp({
             logs, logFilter, loadLogs, clearLogs,
             showCardModal, cardModalHtml,
 
-            // 转存到 CMS
-            const transferToCms = async (url) => {
-                if (!url || url === 'N/A') return;
-                try {
-                    const res = await fetch('/api/transfer', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token.value}`
-                        },
-                        body: JSON.stringify({ url })
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                        alert(`转存成功: ${data.message || '任务已添加'}`);
-                    } else {
-                        throw new Error(data.error || '请求失败');
-                    }
-                } catch (err) {
-                    alert(`转存失败: ${err.message}`);
-                }
-            };
-
-            return {
-                isLoggedIn, username, currentPage, loading, error, loginForm, isDark,
-                sidebarOpen, sidebarCollapsed,
-                dashboard, channels, searchQuery, searchChannel, searchResults, searchPerformed,
-                searchHistory, removeFromHistory, clearHistory,
-                resourceChannel, resourcePage, resourceTotalPages, resources,
-                syncChannel, syncStatus, syncRunning,
-                tasks, newTask,
-                logs, logFilter, loadLogs, clearLogs,
-                showCardModal, cardModalHtml,
-                toggleTheme, login, logout, loadDashboard, doSearch, loadResources, copyLink, syncNow,
-                loadTasks, addTask, deleteTask, formatDate,
-                openCardPreview: (html) => { cardModalHtml.value = html; showCardModal.value = true; },
-                closeCardPreview: () => { showCardModal.value = false; cardModalHtml.value = ''; },
-                transferToCms
-            };
-        }
-    }).mount('#app');
+            closeCardPreview: () => { showCardModal.value = false; cardModalHtml.value = ''; },
+            transferToCms
+        };
+    }
+}).mount('#app');
