@@ -335,7 +335,7 @@
                             <div class="mb-4"><span class="text-slate-600 dark:text-slate-400">找到 <span
                                         class="font-semibold text-slate-900 dark:text-white">{{ searchResults.length
                                         }}</span> 条结果</span></div>
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                                 <div v-for="item in searchResults" :key="item.message_id"
                                     class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-5 border border-slate-200 dark:border-slate-700">
                                     <div class="flex items-start justify-between mb-3">
@@ -552,7 +552,7 @@
                                     class="h-10 px-6 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium whitespace-nowrap">添加</button>
                             </div>
 
-                            <div v-if="tasks.length > 0" class="space-y-2">
+                            <div v-if="tasks.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                                 <div v-for="task in tasks" :key="task.id"
                                     class="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900">
                                     <div>

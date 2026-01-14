@@ -3,6 +3,6 @@
     "channel": "all",
     "mode": "incremental",
     "interval_hours": 1,
-    "next_run": null
+    "next_run": "2026-01-14T15:40:57.129493+08:00"
   }
 ]
