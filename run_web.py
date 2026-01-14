@@ -10,6 +10,16 @@ Web 服务启动脚本
 """
 
 import argparse
+import os
+
+try:
+  from dotenv import load_dotenv
+  load_dotenv()
+  print("已加载 .env 配置文件")
+except ImportError:
+  print("提示: 未安装 python-dotenv，将仅使用系统环境变量")
+  print("      可以使用 pip install python-dotenv 来支持 .env 文件")
+
 from web.app import run_server
 
 if __name__ == '__main__':
