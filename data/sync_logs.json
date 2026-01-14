@@ -1,5 +1,69 @@
 [
   {
+    "id": 1768374545455,
+    "timestamp": "2026-01-14T15:09:05.455616",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步失败: signal only works in main thread of the main interpreter",
+    "status": "error"
+  },
+  {
+    "id": 1768374545449,
+    "timestamp": "2026-01-14T15:09:05.449621",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步开始: 懒狗集中营 (full)",
+    "status": "info"
+  },
+  {
+    "id": 1768374540866,
+    "timestamp": "2026-01-14T15:09:00.866829",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步完成: 懒狗集中营",
+    "status": "success"
+  },
+  {
+    "id": 1768374536206,
+    "timestamp": "2026-01-14T15:08:56.206634",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步开始: 懒狗集中营 (incremental)",
+    "status": "info"
+  },
+  {
+    "id": 1768374512856,
+    "timestamp": "2026-01-14T15:08:32.856242",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步失败: signal only works in main thread of the main interpreter",
+    "status": "error"
+  },
+  {
+    "id": 1768374512853,
+    "timestamp": "2026-01-14T15:08:32.853196",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步开始: 懒狗集中营 (full)",
+    "status": "info"
+  },
+  {
+    "id": 1768374501107,
+    "timestamp": "2026-01-14T15:08:21.107529",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步失败: signal only works in main thread of the main interpreter",
+    "status": "error"
+  },
+  {
+    "id": 1768374501103,
+    "timestamp": "2026-01-14T15:08:21.103533",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步开始: 懒狗集中营 (full)",
+    "status": "info"
+  },
+  {
     "id": 1768373965671,
     "timestamp": "2026-01-14T14:59:25.671050",
     "type": "sync",

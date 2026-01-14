@@ -33,14 +33,22 @@ class ChannelCrawler:
 
   def setup_signal_handler(self, state_manager: StateManager, state: CrawlState):
     """设置中断信号处理"""
+    import threading
+    # 信号处理只能在主线程设置
+    if threading.current_thread() is not threading.main_thread():
+      return
+
     def handler(signum, frame):
       print("\n\n收到中断信号，正在保存进度...")
       state_manager.save(state)
       print(f"进度已保存。使用 --resume 继续爬取。")
       self._interrupted = True
 
-    signal.signal(signal.SIGINT, handler)
-    signal.signal(signal.SIGTERM, handler)
+    try:
+      signal.signal(signal.SIGINT, handler)
+      signal.signal(signal.SIGTERM, handler)
+    except ValueError:
+      pass  # 非主线程，跳过
 
   def crawl_all(self, db: Database, state_manager: StateManager,
           resume_state: Optional[CrawlState] = None) -> int:
