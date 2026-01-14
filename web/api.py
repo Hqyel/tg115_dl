@@ -409,7 +409,27 @@ def list_logs():
 
 @api_bp.route('/logs', methods=['DELETE'])
 @login_required
-def delete_logs():
   clear_logs()
   return jsonify({'message': '日志已清空'})
+
+
+@api_bp.route('/transfer', methods=['POST'])
+@login_required
+def transfer_resource():
+  data = request.get_json()
+  if not data or 'url' not in data:
+    return jsonify({'error': '请提供链接'}), 400
+
+  url = data['url']
+  if not url:
+    return jsonify({'error': '链接不能为空'}), 400
+
+  try:
+    from src.utils.cms import CloudSyncMediaClient
+    # 从环境变量或配置中获取 CMS 信息
+    client = CloudSyncMediaClient()
+    result = client.add_share_down(url)
+    return jsonify({'message': 'CMS 转存任务已添加', 'result': result})
+  except Exception as e:
+    return jsonify({'error': str(e)}), 400
 

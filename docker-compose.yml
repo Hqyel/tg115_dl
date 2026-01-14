@@ -1,18 +1,25 @@
 version: '3.8'
 
 services:
-  web:
-    build: .
-    image: tg-spider-web:latest
-    container_name: tg-spider-web
+  tg_dl:
+    image: tg_dl
+    container_name: tg_dl
     restart: unless-stopped
-    ports:
-      - "5000:5000"
     volumes:
       - ./data:/app/data
     environment:
-      - TG_WEB_USER=admin
-      - TG_WEB_PASSWORD=admin123
+      - TG_WEB_USER=stomak
+      - TG_WEB_PASSWORD=stomak3.14
+      - CMS_URL=http://your-cms-ip:port
+      - CMS_USER=admin
+      - CMS_PASSWORD=password
       - TZ=Asia/Shanghai
     stdin_open: true
     tty: true
+    networks:
+      custom_bridge:
+        ipv4_address: 10.10.10.18
+
+networks:
+  custom_bridge:
+    external: true

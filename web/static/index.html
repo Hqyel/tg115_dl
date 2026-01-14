@@ -414,6 +414,13 @@
                                                 <img src="https://unpkg.com/lucide-static@latest/icons/layout.svg"
                                                     class="w-4 h-4">原卡片
                                             </button>
+                                            <button
+                                                v-if="item.pan_url && (item.pan_url.includes('115.com') || item.pan_url.includes('115cdn.com'))"
+                                                @click="transferToCms(item.pan_url)"
+                                                class="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-200 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400 text-sm font-medium">
+                                                <img src="https://unpkg.com/lucide-static@latest/icons/cloud-upload.svg"
+                                                    class="w-4 h-4">转存
+                                            </button>
                                             <span v-if="!item.pan_url || item.pan_url === 'N/A'"
                                                 class="text-slate-400 text-sm">暂无链接</span>
                                         </div>
