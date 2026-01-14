@@ -15,6 +15,7 @@ class Resource:
   pan_url: str = ""
   description: str = ""
   created_at: str = ""
+  raw_html: str = ""  # 原始消息卡片 HTML
 
 
 @dataclass

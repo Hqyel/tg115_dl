@@ -58,11 +58,17 @@ class Database:
           telegraph_url TEXT,
           pan_url TEXT,
           description TEXT,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          raw_html TEXT
         )
       """)
       conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{channel_id}_title ON {table}(title)")
       conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{channel_id}_tags ON {table}(tags)")
+      # 自动迁移: 添加 raw_html 列（如果不存在）
+      try:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN raw_html TEXT")
+      except sqlite3.OperationalError:
+        pass  # 列已存在
       conn.commit()
 
   def save_resource(self, channel_id: str, resource: Resource) -> bool:
@@ -71,8 +77,8 @@ class Database:
     with sqlite3.connect(self.db_path) as conn:
       conn.execute(f"""
         INSERT OR REPLACE INTO {table}
-        (message_id, title, tags, telegraph_url, pan_url, description, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (message_id, title, tags, telegraph_url, pan_url, description, created_at, raw_html)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       """, (
         resource.message_id,
         resource.title,
@@ -80,7 +86,8 @@ class Database:
         resource.telegraph_url,
         resource.pan_url,
         resource.description,
-        resource.created_at or time.strftime("%Y-%m-%d %H:%M:%S")
+        resource.created_at or time.strftime("%Y-%m-%d %H:%M:%S"),
+        resource.raw_html
       ))
       conn.commit()
     return True

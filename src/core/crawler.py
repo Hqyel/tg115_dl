@@ -251,14 +251,27 @@ class ChannelCrawler:
             title_parts.append(tag_text.lstrip("#"))
 
     # 根据解析模式处理
-    if self.parse_mode == "telegraph":
-      return self._parse_telegraph_mode(div, message_id, tags, title_parts)
-    elif self.parse_mode == "button":
-      return self._parse_button_mode(div, message_id, tags, title_parts, text_div)
-    else:
-      return self._parse_inline_mode(div, message_id, tags, title_parts, text_div)
+    # 获取清理后的原始HTML
+    raw_html = self._get_clean_html(div)
 
-  def _parse_telegraph_mode(self, div, message_id: int, tags: list, title_parts: list) -> Optional[Resource]:
+    if self.parse_mode == "telegraph":
+      return self._parse_telegraph_mode(div, message_id, tags, title_parts, raw_html)
+    elif self.parse_mode == "button":
+      return self._parse_button_mode(div, message_id, tags, title_parts, text_div, raw_html)
+    else:
+      return self._parse_inline_mode(div, message_id, tags, title_parts, text_div, raw_html)
+
+  def _get_clean_html(self, div) -> str:
+    """获取清理后的消息卡片HTML"""
+    from copy import copy
+    # 复制元素以避免修改原始数据
+    div_copy = copy(div)
+    # 移除不必要的元素
+    for script in div_copy.find_all(['script', 'style']):
+      script.decompose()
+    return str(div_copy)
+
+  def _parse_telegraph_mode(self, div, message_id: int, tags: list, title_parts: list, raw_html: str) -> Optional[Resource]:
     """解析 telegraph 模式（Lsp115）"""
     telegraph_url = ""
     for link in div.find_all("a", href=True):
@@ -281,10 +294,11 @@ class ChannelCrawler:
       message_id=message_id,
       title=title,
       tags=",".join(tags),
-      telegraph_url=telegraph_url
+      telegraph_url=telegraph_url,
+      raw_html=raw_html
     )
 
-  def _parse_inline_mode(self, div, message_id: int, tags: list, title_parts: list, text_div) -> Optional[Resource]:
+  def _parse_inline_mode(self, div, message_id: int, tags: list, title_parts: list, text_div, raw_html: str) -> Optional[Resource]:
     """解析 inline 模式（vip115hot）"""
     pan_url = ""
     description = ""
@@ -332,10 +346,11 @@ class ChannelCrawler:
       title=title,
       tags=",".join(tags),
       pan_url=pan_url,
-      description=description
+      description=description,
+      raw_html=raw_html
     )
 
-  def _parse_button_mode(self, div, message_id: int, tags: list, title_parts: list, text_div) -> Optional[Resource]:
+  def _parse_button_mode(self, div, message_id: int, tags: list, title_parts: list, text_div, raw_html: str) -> Optional[Resource]:
     """解析 button 模式（QukanMovie）"""
     pan_url = ""
     description = ""
@@ -384,7 +399,8 @@ class ChannelCrawler:
       title=title,
       tags=",".join(tags),
       pan_url=pan_url,
-      description=description
+      description=description,
+      raw_html=raw_html
     )
 
   def _extract_title_from_url(self, url: str) -> str:

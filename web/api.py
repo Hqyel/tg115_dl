@@ -215,7 +215,8 @@ def search():
     'title': r.title,
     'tags': r.tags,
     'pan_url': r.pan_url,
-    'description': r.description
+    'description': r.description,
+    'raw_html': r.raw_html
   } for ch_id, r in results]
 
   return jsonify({'count': len(resources), 'resources': resources})

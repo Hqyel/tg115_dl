@@ -400,6 +400,11 @@
                                             <img src="https://unpkg.com/lucide-static@latest/icons/message-circle.svg"
                                                 class="w-4 h-4">原消息
                                         </a>
+                                        <button v-if="item.raw_html" @click="openCardPreview(item.raw_html)"
+                                            class="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-amber-600 dark:text-amber-400 text-sm">
+                                            <img src="https://unpkg.com/lucide-static@latest/icons/layout.svg"
+                                                class="w-4 h-4">原卡片
+                                        </button>
                                         <span v-if="!item.pan_url || item.pan_url === 'N/A'"
                                             class="text-slate-400 text-sm">暂无链接</span>
                                     </div>
@@ -667,9 +672,105 @@
                         </div>
                     </div>
                 </div>
-            </main>
+        </div>
+        </main>
+    </div>
+
+    <!-- 原始卡片预览模态框 -->
+    <div v-if="showCardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+        @click.self="closeCardPreview">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-semibold">原始消息卡片</h3>
+                <button @click="closeCardPreview" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <img src="https://unpkg.com/lucide-static@latest/icons/x.svg" class="w-5 h-5 dark:invert">
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[calc(80vh-80px)] tg-card-preview" v-html="cardModalHtml"></div>
         </div>
     </div>
+    </div>
+
+    <!-- Telegram 卡片样式 -->
+    <style>
+        .tg-card-preview {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #e7ebef;
+            border-radius: 12px;
+        }
+
+        .tg-card-preview .tgme_widget_message_wrap {
+            padding: 12px;
+        }
+
+        .tg-card-preview .tgme_widget_message {
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .tg-card-preview .tgme_widget_message_bubble {
+            padding: 0 !important;
+        }
+
+        .tg-card-preview .tgme_widget_message_text {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #000;
+        }
+
+        .tg-card-preview .tgme_widget_message_author {
+            font-weight: 600;
+            color: #168acd;
+            margin-bottom: 4px;
+        }
+
+        .tg-card-preview a {
+            color: #168acd;
+            text-decoration: none;
+        }
+
+        .tg-card-preview a:hover {
+            text-decoration: underline;
+        }
+
+        .tg-card-preview .tgme_widget_message_photo_wrap {
+            margin: 8px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tg-card-preview .tgme_widget_message_photo_wrap img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .tg-card-preview .tgme_widget_message_inline_keyboard {
+            margin-top: 8px;
+        }
+
+        .tg-card-preview .tgme_widget_message_inline_button {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 4px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .dark .tg-card-preview {
+            background: #1e293b;
+        }
+
+        .dark .tg-card-preview .tgme_widget_message {
+            background: #334155;
+        }
+
+        .dark .tg-card-preview .tgme_widget_message_text {
+            color: #e2e8f0;
+        }
+    </style>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="/static/js/app.js"></script>

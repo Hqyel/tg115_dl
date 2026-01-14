@@ -44,6 +44,10 @@ createApp({
         const logs = ref([]);
         const logFilter = ref('');
 
+        // 原始卡片预览
+        const showCardModal = ref(false);
+        const cardModalHtml = ref('');
+
         const isLoggedIn = computed(() => !!token.value);
         const syncRunning = computed(() => syncStatus.value.running);
 
@@ -299,8 +303,11 @@ createApp({
             syncChannel, syncStatus, syncRunning,
             tasks, newTask,
             logs, logFilter, loadLogs, clearLogs,
+            showCardModal, cardModalHtml,
             toggleTheme, login, logout, loadDashboard, doSearch, loadResources, copyLink, syncNow,
-            loadTasks, addTask, deleteTask, formatDate
+            loadTasks, addTask, deleteTask, formatDate,
+            openCardPreview: (html) => { cardModalHtml.value = html; showCardModal.value = true; },
+            closeCardPreview: () => { showCardModal.value = false; cardModalHtml.value = ''; }
         };
     }
 }).mount('#app');
