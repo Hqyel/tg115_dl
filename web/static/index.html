@@ -1,539 +1,486 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TG 资源爬虫管理</title>
-    <!-- Tailwind CSS -->
+    <title>TG 资源爬虫</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        primary: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
-                        accent: { 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed' }
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
                     }
                 }
             }
         }
     </script>
-    <style>
-        /* 玻璃拟态效果 */
-        .glass {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .glass-strong {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-
-        /* 渐变背景 */
-        .bg-mesh {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-        }
-
-        /* 动画 */
-        .animate-glow {
-            animation: glow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes glow {
-            from {
-                box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
-            }
-
-            to {
-                box-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
-            }
-        }
-
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        /* 滚动条 */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.5);
-            border-radius: 3px;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
-<body class="bg-mesh min-h-screen text-white font-sans antialiased">
+<body
+    class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-300">
     <div id="app">
         <!-- 登录页面 -->
-        <div v-if="!isLoggedIn" class="min-h-screen flex items-center justify-center p-4">
-            <div class="absolute inset-0 overflow-hidden">
-                <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/30 rounded-full blur-3xl"></div>
-                <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/30 rounded-full blur-3xl"></div>
+        <div v-if="!isLoggedIn" class="min-h-screen flex">
+            <!-- 左侧装饰 -->
+            <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200"
+                    class="absolute inset-0 w-full h-full object-cover" alt="bg">
+                <div class="absolute inset-0 bg-gradient-to-br from-violet-600/90 to-indigo-900/90"></div>
+                <div class="relative z-10 flex flex-col justify-center px-16">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div
+                            class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                            <img src="https://unpkg.com/lucide-static@latest/icons/film.svg" class="w-7 h-7 invert">
+                        </div>
+                        <span class="text-2xl font-bold text-white">TG 资源爬虫</span>
+                    </div>
+                    <h1 class="text-4xl font-bold text-white mb-4 leading-tight">
+                        智能采集<br>115 网盘资源
+                    </h1>
+                    <p class="text-white/70 text-lg max-w-md">
+                        自动爬取 Telegram 公开频道，智能解析并提取 115 网盘链接，支持多频道管理与关键词搜索。
+                    </p>
+                </div>
             </div>
 
-            <div class="glass-strong rounded-3xl p-8 w-full max-w-md relative z-10 animate-float">
-                <div class="text-center mb-8">
-                    <div
-                        class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center animate-glow">
-                        <img src="https://unpkg.com/lucide-static@latest/icons/film.svg" class="w-10 h-10 invert"
-                            alt="icon">
+            <!-- 右侧登录表单 -->
+            <div class="flex-1 flex items-center justify-center p-8">
+                <div class="w-full max-w-md">
+                    <div class="lg:hidden flex items-center gap-3 mb-10">
+                        <div class="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center">
+                            <img src="https://unpkg.com/lucide-static@latest/icons/film.svg" class="w-5 h-5 invert">
+                        </div>
+                        <span class="text-xl font-bold">TG 资源爬虫</span>
                     </div>
-                    <h1
-                        class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                        TG 资源爬虫</h1>
-                    <p class="text-gray-400 mt-2">请登录以继续</p>
-                </div>
 
-                <form @submit.prevent="login" class="space-y-5">
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-2">用户名</label>
-                        <div class="relative">
-                            <img src="https://unpkg.com/lucide-static@latest/icons/user.svg"
-                                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-50 invert">
-                            <input type="text" v-model="loginForm.username" placeholder="请输入用户名" required
-                                class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all">
+                    <h2 class="text-2xl font-bold mb-2">欢迎回来</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mb-8">请登录您的账户</p>
+
+                    <form @submit.prevent="login" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">用户名</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <img src="https://unpkg.com/lucide-static@latest/icons/user.svg"
+                                        class="w-5 h-5 opacity-40 dark:invert">
+                                </div>
+                                <input type="text" v-model="loginForm.username" required
+                                    class="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="请输入用户名">
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-2">密码</label>
-                        <div class="relative">
-                            <img src="https://unpkg.com/lucide-static@latest/icons/lock.svg"
-                                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-50 invert">
-                            <input type="password" v-model="loginForm.password" placeholder="请输入密码" required
-                                class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all">
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">密码</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <img src="https://unpkg.com/lucide-static@latest/icons/lock.svg"
+                                        class="w-5 h-5 opacity-40 dark:invert">
+                                </div>
+                                <input type="password" v-model="loginForm.password" required
+                                    class="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="请输入密码">
+                            </div>
                         </div>
-                    </div>
-                    <button type="submit" :disabled="loading"
-                        class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 font-semibold transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/25">
-                        <span v-if="!loading">登 录</span>
-                        <span v-else class="flex items-center justify-center gap-2">
-                            <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+
+                        <button type="submit" :disabled="loading"
+                            class="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                            <svg v-if="loading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                     stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
-                            登录中...
-                        </span>
-                    </button>
-                    <p v-if="error" class="text-red-400 text-sm text-center mt-4">{{ error }}</p>
-                </form>
+                            <span>{{ loading ? '登录中...' : '登 录' }}</span>
+                        </button>
+
+                        <p v-if="error" class="text-red-500 text-sm text-center">{{ error }}</p>
+                    </form>
+                </div>
             </div>
         </div>
 
         <!-- 主界面 -->
         <div v-else class="flex min-h-screen">
             <!-- 侧边栏 -->
-            <aside class="w-72 glass fixed h-screen flex flex-col">
-                <div class="p-6 border-b border-white/10">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                            <img src="https://unpkg.com/lucide-static@latest/icons/film.svg" class="w-6 h-6 invert"
-                                alt="logo">
-                        </div>
-                        <div>
-                            <h1 class="font-bold text-lg">TG 资源爬虫</h1>
-                            <p class="text-xs text-gray-400">管理控制台</p>
-                        </div>
+            <aside
+                class="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col fixed h-screen">
+                <!-- Logo -->
+                <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-200 dark:border-slate-700">
+                    <div class="w-9 h-9 bg-violet-600 rounded-lg flex items-center justify-center">
+                        <img src="https://unpkg.com/lucide-static@latest/icons/film.svg" class="w-5 h-5 invert">
                     </div>
+                    <span class="font-bold text-lg">TG 资源爬虫</span>
                 </div>
 
-                <nav class="flex-1 p-4 space-y-2">
-                    <a href="#" @click.prevent="currentPage = 'dashboard'"
-                        :class="['flex items-center gap-3 px-4 py-3 rounded-xl transition-all', currentPage === 'dashboard' ? 'bg-gradient-to-r from-purple-600/50 to-blue-600/50 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white']">
+                <!-- 导航 -->
+                <nav class="flex-1 p-4 space-y-1">
+                    <a href="#" @click.prevent="currentPage = 'dashboard'" :class="['flex items-center gap-3 h-11 px-4 rounded-xl font-medium transition-all', 
+                     currentPage === 'dashboard' 
+                       ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' 
+                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
                         <img src="https://unpkg.com/lucide-static@latest/icons/layout-dashboard.svg"
-                            class="w-5 h-5 invert opacity-70">
+                            :class="['w-5 h-5', currentPage === 'dashboard' ? '' : 'opacity-60 dark:invert']">
                         <span>仪表盘</span>
                     </a>
-                    <a href="#" @click.prevent="currentPage = 'search'"
-                        :class="['flex items-center gap-3 px-4 py-3 rounded-xl transition-all', currentPage === 'search' ? 'bg-gradient-to-r from-purple-600/50 to-blue-600/50 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white']">
+                    <a href="#" @click.prevent="currentPage = 'search'" :class="['flex items-center gap-3 h-11 px-4 rounded-xl font-medium transition-all', 
+                     currentPage === 'search' 
+                       ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' 
+                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
                         <img src="https://unpkg.com/lucide-static@latest/icons/search.svg"
-                            class="w-5 h-5 invert opacity-70">
+                            :class="['w-5 h-5', currentPage === 'search' ? '' : 'opacity-60 dark:invert']">
                         <span>影视搜索</span>
                     </a>
-                    <a href="#" @click.prevent="currentPage = 'resources'"
-                        :class="['flex items-center gap-3 px-4 py-3 rounded-xl transition-all', currentPage === 'resources' ? 'bg-gradient-to-r from-purple-600/50 to-blue-600/50 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white']">
+                    <a href="#" @click.prevent="currentPage = 'resources'" :class="['flex items-center gap-3 h-11 px-4 rounded-xl font-medium transition-all', 
+                     currentPage === 'resources' 
+                       ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' 
+                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
                         <img src="https://unpkg.com/lucide-static@latest/icons/database.svg"
-                            class="w-5 h-5 invert opacity-70">
+                            :class="['w-5 h-5', currentPage === 'resources' ? '' : 'opacity-60 dark:invert']">
                         <span>数据库</span>
                     </a>
-                    <a href="#" @click.prevent="currentPage = 'sync'"
-                        :class="['flex items-center gap-3 px-4 py-3 rounded-xl transition-all', currentPage === 'sync' ? 'bg-gradient-to-r from-purple-600/50 to-blue-600/50 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white']">
+                    <a href="#" @click.prevent="currentPage = 'sync'" :class="['flex items-center gap-3 h-11 px-4 rounded-xl font-medium transition-all', 
+                     currentPage === 'sync' 
+                       ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' 
+                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
                         <img src="https://unpkg.com/lucide-static@latest/icons/refresh-cw.svg"
-                            class="w-5 h-5 invert opacity-70">
+                            :class="['w-5 h-5', currentPage === 'sync' ? '' : 'opacity-60 dark:invert']">
                         <span>同步管理</span>
                     </a>
                 </nav>
 
-                <div class="p-4 border-t border-white/10">
-                    <div class="flex items-center justify-between glass rounded-xl p-3">
+                <!-- 底部用户信息 -->
+                <div class="p-4 border-t border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center font-bold">
+                                class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm">
                                 {{ username.charAt(0).toUpperCase() }}
                             </div>
-                            <span class="text-sm">{{ username }}</span>
+                            <span class="font-medium text-sm">{{ username }}</span>
                         </div>
-                        <button @click="logout" class="p-2 rounded-lg hover:bg-white/10 transition-colors" title="退出登录">
+                        <button @click="logout"
+                            class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                            title="退出登录">
                             <img src="https://unpkg.com/lucide-static@latest/icons/log-out.svg"
-                                class="w-5 h-5 invert opacity-70">
+                                class="w-5 h-5 opacity-60 dark:invert">
                         </button>
                     </div>
                 </div>
             </aside>
 
             <!-- 主内容区 -->
-            <main class="flex-1 ml-72 p-8">
-                <!-- 仪表盘 -->
-                <div v-if="currentPage === 'dashboard'" class="space-y-8">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-2xl font-bold">仪表盘</h2>
-                            <p class="text-gray-400 mt-1">资源统计与系统状态</p>
-                        </div>
+            <main class="flex-1 ml-64">
+                <!-- 顶部栏 -->
+                <header
+                    class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-10">
+                    <h1 class="text-xl font-semibold">
+                        {{ currentPage === 'dashboard' ? '仪表盘' : currentPage === 'search' ? '影视搜索' : currentPage ===
+                        'resources' ? '数据库' : '同步管理' }}
+                    </h1>
+                    <div class="flex items-center gap-4">
+                        <!-- 暗亮模式切换 -->
+                        <button @click="toggleTheme"
+                            class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                            <img :src="isDark ? 'https://unpkg.com/lucide-static@latest/icons/sun.svg' : 'https://unpkg.com/lucide-static@latest/icons/moon.svg'"
+                                class="w-5 h-5 dark:invert">
+                        </button>
                         <button @click="loadDashboard"
-                            class="glass px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-white/10 transition-colors">
+                            class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
                             <img src="https://unpkg.com/lucide-static@latest/icons/refresh-cw.svg"
-                                class="w-4 h-4 invert opacity-70">
-                            刷新
+                                class="w-5 h-5 opacity-60 dark:invert">
                         </button>
                     </div>
+                </header>
 
-                    <!-- 统计卡片 -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group">
-                            <div class="flex items-center justify-between mb-4">
-                                <div
-                                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <img src="https://unpkg.com/lucide-static@latest/icons/library.svg"
-                                        class="w-6 h-6 invert">
-                                </div>
-                                <span class="text-xs text-gray-400">总计</span>
-                            </div>
-                            <div class="text-3xl font-bold">{{ dashboard.total_resources?.toLocaleString() || 0 }}</div>
-                            <div class="text-gray-400 text-sm mt-1">资源总数</div>
-                        </div>
-
-                        <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group">
-                            <div class="flex items-center justify-between mb-4">
-                                <div
-                                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <img src="https://unpkg.com/lucide-static@latest/icons/check-circle.svg"
-                                        class="w-6 h-6 invert">
-                                </div>
-                                <span class="text-xs text-gray-400">已完成</span>
-                            </div>
-                            <div class="text-3xl font-bold">{{ dashboard.total_parsed?.toLocaleString() || 0 }}</div>
-                            <div class="text-gray-400 text-sm mt-1">已解析链接</div>
-                        </div>
-
-                        <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group">
-                            <div class="flex items-center justify-between mb-4">
-                                <div
-                                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <img src="https://unpkg.com/lucide-static@latest/icons/tv.svg"
-                                        class="w-6 h-6 invert">
-                                </div>
-                                <span class="text-xs text-gray-400">频道</span>
-                            </div>
-                            <div class="text-3xl font-bold">{{ dashboard.channels?.length || 0 }}</div>
-                            <div class="text-gray-400 text-sm mt-1">监控频道</div>
-                        </div>
-
-                        <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group">
-                            <div class="flex items-center justify-between mb-4">
-                                <div
-                                    :class="['w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform', dashboard.sync_status?.running ? 'bg-gradient-to-br from-yellow-500 to-orange-500 animate-pulse' : 'bg-gradient-to-br from-gray-500 to-gray-600']">
-                                    <img src="https://unpkg.com/lucide-static@latest/icons/activity.svg"
-                                        class="w-6 h-6 invert">
-                                </div>
-                                <span class="text-xs text-gray-400">状态</span>
-                            </div>
-                            <div class="text-3xl font-bold">{{ dashboard.sync_status?.running ? '同步中' : '空闲' }}</div>
-                            <div class="text-gray-400 text-sm mt-1">系统状态</div>
-                        </div>
-                    </div>
-
-                    <!-- 频道列表 -->
-                    <div>
-                        <h3 class="text-lg font-semibold mb-4">频道详情</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div v-for="ch in dashboard.channels" :key="ch.id"
-                                class="glass rounded-2xl p-5 hover:bg-white/10 transition-all">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div>
-                                        <h4 class="font-semibold">{{ ch.name }}</h4>
-                                        <span class="text-xs text-gray-400">{{ ch.id }}</span>
+                <div class="p-8">
+                    <!-- 仪表盘 -->
+                    <div v-if="currentPage === 'dashboard'" class="space-y-8">
+                        <!-- 统计卡片 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div
+                                class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div
+                                        class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                        <img src="https://unpkg.com/lucide-static@latest/icons/folder.svg"
+                                            class="w-6 h-6 text-blue-600">
                                     </div>
-                                    <span class="px-2 py-1 text-xs rounded-lg bg-purple-500/20 text-purple-400">{{
-                                        ch.parse_mode }}</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">总计</span>
                                 </div>
-                                <div class="flex justify-between text-center">
-                                    <div>
-                                        <div class="text-xl font-bold text-cyan-400">{{ ch.total }}</div>
-                                        <div class="text-xs text-gray-400">总数</div>
+                                <div class="text-3xl font-bold">{{ dashboard.total_resources?.toLocaleString() || 0 }}
+                                </div>
+                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">资源总数</div>
+                            </div>
+
+                            <div
+                                class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div
+                                        class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                        <img src="https://unpkg.com/lucide-static@latest/icons/check-circle.svg"
+                                            class="w-6 h-6 text-emerald-600">
                                     </div>
-                                    <div>
-                                        <div class="text-xl font-bold text-green-400">{{ ch.parsed }}</div>
-                                        <div class="text-xs text-gray-400">已解析</div>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">已完成</span>
+                                </div>
+                                <div class="text-3xl font-bold">{{ dashboard.total_parsed?.toLocaleString() || 0 }}
+                                </div>
+                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">已解析链接</div>
+                            </div>
+
+                            <div
+                                class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div
+                                        class="w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                                        <img src="https://unpkg.com/lucide-static@latest/icons/tv.svg"
+                                            class="w-6 h-6 text-violet-600">
                                     </div>
-                                    <div>
-                                        <div class="text-xl font-bold text-yellow-400">{{ ch.unparsed }}</div>
-                                        <div class="text-xs text-gray-400">待解析</div>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">频道</span>
+                                </div>
+                                <div class="text-3xl font-bold">{{ dashboard.channels?.length || 0 }}</div>
+                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">监控频道</div>
+                            </div>
+
+                            <div
+                                class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div
+                                        :class="['w-12 h-12 rounded-xl flex items-center justify-center', dashboard.sync_status?.running ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-slate-700']">
+                                        <img src="https://unpkg.com/lucide-static@latest/icons/activity.svg"
+                                            :class="['w-6 h-6', dashboard.sync_status?.running ? 'animate-pulse' : '']">
+                                    </div>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">状态</span>
+                                </div>
+                                <div class="text-3xl font-bold">{{ dashboard.sync_status?.running ? '同步中' : '空闲' }}
+                                </div>
+                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">系统状态</div>
+                            </div>
+                        </div>
+
+                        <!-- 频道列表 -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">频道详情</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div v-for="ch in dashboard.channels" :key="ch.id"
+                                    class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600 transition-colors">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h4 class="font-semibold">{{ ch.name }}</h4>
+                                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ ch.id }}</span>
+                                        </div>
+                                        <span
+                                            class="px-2.5 py-1 text-xs font-medium rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+                                            {{ ch.parse_mode }}
+                                        </span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <div class="text-center">
+                                            <div class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ ch.total
+                                                }}</div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400">总数</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">{{
+                                                ch.parsed }}</div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400">已解析</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{
+                                                ch.unparsed }}</div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400">待解析</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 搜索页面 -->
-                <div v-if="currentPage === 'search'" class="space-y-8">
-                    <div>
-                        <h2 class="text-2xl font-bold">影视搜索</h2>
-                        <p class="text-gray-400 mt-1">搜索资源，一键复制链接</p>
-                    </div>
-
-                    <div class="glass rounded-2xl p-6">
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <div class="relative flex-1">
-                                <img src="https://unpkg.com/lucide-static@latest/icons/search.svg"
-                                    class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-50 invert">
-                                <input type="text" v-model="searchQuery" placeholder="输入关键词搜索..."
-                                    @keyup.enter="doSearch"
-                                    class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all">
-                            </div>
-                            <select v-model="searchChannel"
-                                class="bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-purple-500 min-w-[150px]">
-                                <option value="">全部频道</option>
-                                <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
-                            </select>
-                            <button @click="doSearch" :disabled="loading"
-                                class="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 font-semibold transition-all disabled:opacity-50 whitespace-nowrap">
-                                {{ loading ? '搜索中...' : '搜 索' }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div v-if="searchResults.length > 0">
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-gray-400">找到 <span class="text-white font-semibold">{{
-                                    searchResults.length }}</span> 条结果</span>
-                        </div>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div v-for="item in searchResults" :key="item.message_id"
-                                class="glass rounded-2xl p-5 hover:bg-white/10 transition-all group">
-                                <div class="flex items-start justify-between mb-3">
-                                    <h4 class="font-semibold text-lg leading-tight flex-1 mr-4">{{ item.title }}</h4>
-                                    <span
-                                        class="px-2 py-1 text-xs rounded-lg bg-blue-500/20 text-blue-400 whitespace-nowrap">{{
-                                        item.channel_name }}</span>
+                    <!-- 搜索页面 -->
+                    <div v-if="currentPage === 'search'" class="space-y-6">
+                        <div
+                            class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <div class="relative flex-1">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <img src="https://unpkg.com/lucide-static@latest/icons/search.svg"
+                                            class="w-5 h-5 opacity-40 dark:invert">
+                                    </div>
+                                    <input type="text" v-model="searchQuery" @keyup.enter="doSearch"
+                                        class="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="输入关键词搜索...">
                                 </div>
-                                <div v-if="item.tags" class="flex flex-wrap gap-2 mb-4">
-                                    <span v-for="tag in item.tags.split(',')" :key="tag"
-                                        class="px-2 py-1 text-xs rounded-lg bg-white/5 text-gray-400">{{ tag }}</span>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <button v-if="item.pan_url && item.pan_url !== 'N/A'"
-                                        @click="copyLink(item.pan_url)"
-                                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-sm font-medium transition-all">
-                                        <img src="https://unpkg.com/lucide-static@latest/icons/copy.svg"
-                                            class="w-4 h-4 invert">
-                                        复制链接
-                                    </button>
-                                    <a v-if="item.pan_url && item.pan_url !== 'N/A'" :href="item.pan_url"
-                                        target="_blank"
-                                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm transition-all">
-                                        <img src="https://unpkg.com/lucide-static@latest/icons/external-link.svg"
-                                            class="w-4 h-4 invert opacity-70">
-                                        打开
-                                    </a>
-                                    <span v-if="!item.pan_url || item.pan_url === 'N/A'"
-                                        class="text-gray-500 text-sm">暂无链接</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else-if="searchPerformed" class="glass rounded-2xl p-12 text-center">
-                        <img src="https://unpkg.com/lucide-static@latest/icons/search-x.svg"
-                            class="w-16 h-16 mx-auto opacity-30 invert mb-4">
-                        <p class="text-gray-400">没有找到匹配的资源</p>
-                    </div>
-                </div>
-
-                <!-- 数据库页面 -->
-                <div v-if="currentPage === 'resources'" class="space-y-8">
-                    <div>
-                        <h2 class="text-2xl font-bold">数据库</h2>
-                        <p class="text-gray-400 mt-1">浏览所有已收录资源</p>
-                    </div>
-
-                    <div class="glass rounded-2xl p-4 flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <select v-model="resourceChannel" @change="resourcePage = 1; loadResources()"
-                                class="bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-white focus:outline-none focus:border-purple-500">
-                                <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
-                            </select>
-                        </div>
-                        <span class="text-gray-400 text-sm">第 {{ resourcePage }} / {{ resourceTotalPages }} 页</span>
-                    </div>
-
-                    <div class="glass rounded-2xl overflow-hidden">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="border-b border-white/10">
-                                    <th class="text-left p-4 text-gray-400 font-medium text-sm">标题</th>
-                                    <th class="text-left p-4 text-gray-400 font-medium text-sm">标签</th>
-                                    <th class="text-center p-4 text-gray-400 font-medium text-sm w-20">状态</th>
-                                    <th class="text-center p-4 text-gray-400 font-medium text-sm w-24">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="item in resources" :key="item.message_id"
-                                    class="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                    <td class="p-4 max-w-xs truncate">{{ item.title }}</td>
-                                    <td class="p-4 text-gray-400 text-sm max-w-xs truncate">{{ item.tags }}</td>
-                                    <td class="p-4 text-center">
-                                        <span v-if="item.pan_url && item.pan_url !== 'N/A'"
-                                            class="text-green-400">✓</span>
-                                        <span v-else class="text-yellow-400">○</span>
-                                    </td>
-                                    <td class="p-4 text-center">
-                                        <button v-if="item.pan_url && item.pan_url !== 'N/A'"
-                                            @click="copyLink(item.pan_url)"
-                                            class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-sm transition-colors">复制</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="flex justify-center gap-4">
-                        <button @click="resourcePage--; loadResources()" :disabled="resourcePage <= 1"
-                            class="glass px-4 py-2 rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            上一页
-                        </button>
-                        <button @click="resourcePage++; loadResources()" :disabled="resourcePage >= resourceTotalPages"
-                            class="glass px-4 py-2 rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            下一页
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 同步管理 -->
-                <div v-if="currentPage === 'sync'" class="space-y-8">
-                    <div>
-                        <h2 class="text-2xl font-bold">同步管理</h2>
-                        <p class="text-gray-400 mt-1">手动同步与定时任务</p>
-                    </div>
-
-                    <div class="glass rounded-2xl p-6 space-y-4">
-                        <h3 class="font-semibold flex items-center gap-2">
-                            <img src="https://unpkg.com/lucide-static@latest/icons/play.svg"
-                                class="w-5 h-5 invert opacity-70">
-                            手动同步
-                        </h3>
-                        <div class="flex flex-wrap gap-4 items-center">
-                            <select v-model="syncChannel"
-                                class="bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-purple-500 min-w-[180px]">
-                                <option value="all">全部频道</option>
-                                <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
-                            </select>
-                            <button @click="syncNow('incremental')" :disabled="syncRunning"
-                                class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 font-medium transition-all disabled:opacity-50 flex items-center gap-2">
-                                <img src="https://unpkg.com/lucide-static@latest/icons/refresh-cw.svg"
-                                    :class="['w-4 h-4 invert', syncRunning ? 'animate-spin' : '']">
-                                增量同步
-                            </button>
-                            <button @click="syncNow('full')" :disabled="syncRunning"
-                                class="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 font-medium transition-all disabled:opacity-50 flex items-center gap-2">
-                                <img src="https://unpkg.com/lucide-static@latest/icons/download.svg"
-                                    class="w-4 h-4 invert">
-                                全量同步
-                            </button>
-                        </div>
-                        <div v-if="syncStatus.message"
-                            :class="['p-4 rounded-xl text-sm', syncStatus.running ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/5 text-gray-400']">
-                            {{ syncStatus.message }}
-                        </div>
-                    </div>
-
-                    <div class="glass rounded-2xl p-6 space-y-4">
-                        <h3 class="font-semibold flex items-center gap-2">
-                            <img src="https://unpkg.com/lucide-static@latest/icons/clock.svg"
-                                class="w-5 h-5 invert opacity-70">
-                            定时任务
-                        </h3>
-                        <div class="flex flex-wrap gap-4 items-end">
-                            <div>
-                                <label class="text-xs text-gray-400 mb-1 block">频道</label>
-                                <select v-model="newTask.channel"
-                                    class="bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-white focus:outline-none focus:border-purple-500">
-                                    <option value="all">全部频道</option>
+                                <select v-model="searchChannel"
+                                    class="h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none min-w-[160px]">
+                                    <option value="">全部频道</option>
                                     <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
                                 </select>
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400 mb-1 block">模式</label>
-                                <select v-model="newTask.mode"
-                                    class="bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-white focus:outline-none focus:border-purple-500">
-                                    <option value="incremental">增量同步</option>
-                                    <option value="full">全量同步</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400 mb-1 block">间隔（小时）</label>
-                                <input type="number" v-model="newTask.interval" min="1" max="168"
-                                    class="w-24 bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-white focus:outline-none focus:border-purple-500">
-                            </div>
-                            <button @click="addTask"
-                                class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 font-medium transition-all">
-                                添加任务
-                            </button>
-                        </div>
-
-                        <div v-if="tasks.length > 0" class="mt-6 space-y-2">
-                            <div v-for="task in tasks" :key="task.id"
-                                class="flex items-center justify-between p-4 rounded-xl bg-white/5">
-                                <div>
-                                    <div class="font-medium">{{ task.name }}</div>
-                                    <div class="text-sm text-gray-400">下次执行: {{ formatDate(task.next_run) }}</div>
-                                </div>
-                                <button @click="deleteTask(task.id)"
-                                    class="p-2 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors">
-                                    <img src="https://unpkg.com/lucide-static@latest/icons/trash-2.svg"
-                                        class="w-5 h-5 invert opacity-70">
+                                <button @click="doSearch" :disabled="loading"
+                                    class="h-12 px-8 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition-all disabled:opacity-50">
+                                    {{ loading ? '搜索中...' : '搜 索' }}
                                 </button>
                             </div>
                         </div>
-                        <p v-else class="text-gray-400 text-center py-8">暂无定时任务</p>
+
+                        <div v-if="searchResults.length > 0">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-slate-600 dark:text-slate-400">找到 <span
+                                        class="font-semibold text-slate-900 dark:text-white">{{ searchResults.length
+                                        }}</span> 条结果</span>
+                            </div>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div v-for="item in searchResults" :key="item.message_id"
+                                    class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <h4 class="font-semibold text-lg leading-tight flex-1 mr-4">{{ item.title }}
+                                        </h4>
+                                        <span
+                                            class="px-2.5 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                                            {{ item.channel_name }}
+                                        </span>
+                                    </div>
+                                    <div v-if="item.tags" class="flex flex-wrap gap-2 mb-4">
+                                        <span v-for="tag in item.tags.split(',').slice(0,5)" :key="tag"
+                                            class="px-2 py-0.5 text-xs rounded-md bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400">
+                                            {{ tag }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <button v-if="item.pan_url && item.pan_url !== 'N/A'"
+                                            @click="copyLink(item.pan_url)"
+                                            class="flex items-center gap-2 h-10 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-all">
+                                            <img src="https://unpkg.com/lucide-static@latest/icons/copy.svg"
+                                                class="w-4 h-4 invert">
+                                            复制链接
+                                        </button>
+                                        <a v-if="item.pan_url && item.pan_url !== 'N/A'" :href="item.pan_url"
+                                            target="_blank"
+                                            class="flex items-center gap-2 h-10 px-4 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm transition-all">
+                                            <img src="https://unpkg.com/lucide-static@latest/icons/external-link.svg"
+                                                class="w-4 h-4 opacity-60 dark:invert">
+                                            打开
+                                        </a>
+                                        <span v-if="!item.pan_url || item.pan_url === 'N/A'"
+                                            class="text-slate-400 text-sm">暂无链接</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else-if="searchPerformed"
+                            class="bg-white dark:bg-slate-800 rounded-2xl p-16 border border-slate-200 dark:border-slate-700 text-center">
+                            <img src="https://unpkg.com/lucide-static@latest/icons/search-x.svg"
+                                class="w-16 h-16 mx-auto opacity-20 dark:invert mb-4">
+                            <p class="text-slate-500 dark:text-slate-400">没有找到匹配的资源</p>
+                        </div>
+                    </div>
+
+                    <!-- 数据库页面 -->
+                    <div v-if="currentPage === 'resources'" class="space-y-6">
+                        <div
+                            class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            <select v-model="resourceChannel" @change="resourcePage = 1; loadResources()"
+                                class="h-10 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none">
+                                <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
+                            </select>
+                            <span class="text-sm text-slate-500 dark:text-slate-400">第 {{ resourcePage }} / {{
+                                resourceTotalPages }} 页</span>
+                        </div>
+
+                        <div
+                            class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <th
+                                            class="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
+                                            标题</th>
+                                        <th
+                                            class="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
+                                            标签</th>
+                                        <th
+                                            class="text-center p-4 text-sm font-semibold text-slate-600 dark:text-slate-400 w-20">
+                                            状态</th>
+                                        <th
+                                            class="text-center p-4 text-sm font-semibold text-slate-600 dark:text-slate-400 w-24">
+                                            操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in resources" :key="item.message_id"
+                                        class="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                        <td class="p-4 max-w-xs truncate font-medium">{{ item.title }}</td>
+                                        <td class="p-4 text-slate-500 dark:text-slate-400 text-sm max-w-xs truncate">{{
+                                            item.tags }}</td>
+                                        <td class="p-4 text-center">
+                                            <span v-if="item.pan_url && item.pan_url !== 'N/A'"
+                                                class="text-emerald-500">✓</span>
+                                            <span v-else class="text-amber-400">○</span>
+                                        </td>
+                                        <td class="p-4 text-center">
+                                            <button v-if="item.pan_url && item.pan_url !== 'N/A'"
+                                                @click="copyLink(item.pan_url)"
+                                                class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm transition-colors">
+                                                复制
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex justify-center gap-3">
+                            <button @click="resourcePage--; loadResources()" :disabled="resourcePage <= 1"
+                                class="h-10 px-5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                                上一页
+                            </button>
+                            <button @click="resourcePage++; loadResources()"
+                                :disabled="resourcePage >= resourceTotalPages"
+                                class="h-10 px-5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                                下一页
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 同步管理 -->
+                    <div v-if="currentPage === 'sync'" class="space-y-6">
+                        <div
+                            class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+                            <h3 class="font-semibold mb-4 flex items-center gap-2">
+                                <img src="https://unpkg.com/lucide-static@latest/icons/play.svg"
+                                    class="w-5 h-5 opacity-60 dark:invert">
+                                手动同步
+                            </h3>
+                            <div class="flex flex-wrap gap-4 items-center">
+                                <select v-model="syncChannel"
+                                    class="h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none min-w-[180px]">
+                                    <option value="all">全部频道</option>
+                                    <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
+                                </select>
+                                <button @click="syncNow('incremental')" :disabled="syncRunning"
+                                    class="h-11 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all disabled:opacity-50 flex items-center gap-2">
+                                    <img src="https://unpkg.com/lucide-static@latest/icons/refresh-cw.svg"
+                                        :class="['w-4 h-4 invert', syncRunning ? 'animate-spin' : '']">
+                                    增量同步
+                                </button>
+                                <button @click="syncNow('full')" :disabled="syncRunning"
+                                    class="h-11 px-6 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium transition-all disabled:opacity-50 flex items-center gap-2">
+                                    <img src="https://unpkg.com/lucide-static@latest/icons/download.svg"
+                                        class="w-4 h-4 invert">
+                                    全量同步
+                                </button>
+                            </div>
+                            <div v-if="syncStatus.message"
+                                :class="['mt-4 p-4 rounded-xl text-sm', syncStatus.running ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400']">
+                                {{ syncStatus.message }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
