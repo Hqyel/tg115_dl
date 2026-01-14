@@ -28,6 +28,7 @@ createApp({
         const searchChannel = ref('');
         const searchResults = ref([]);
         const searchPerformed = ref(false);
+        const searchHistory = ref(JSON.parse(localStorage.getItem('searchHistory') || '[]'));
         const resourceChannel = ref('lsp115');
         const resourcePage = ref(1);
         const resourceTotalPages = ref(1);
@@ -119,20 +120,41 @@ createApp({
             }
         }
 
-        async function doSearch() {
-            if (!searchQuery.value.trim()) return;
+        async function doSearch(query = null) {
+            const q = query || searchQuery.value.trim();
+            if (!q) return;
+            searchQuery.value = q;
             loading.value = true;
             searchPerformed.value = true;
             try {
-                let url = `/search?q=${encodeURIComponent(searchQuery.value)}`;
+                let url = `/search?q=${encodeURIComponent(q)}`;
                 if (searchChannel.value) url += `&channel=${searchChannel.value}`;
                 const data = await api(url);
                 searchResults.value = data.resources;
+                // 保存到历史记录
+                addToHistory(q);
             } catch (e) {
                 searchResults.value = [];
             } finally {
                 loading.value = false;
             }
+        }
+
+        function addToHistory(query) {
+            const history = searchHistory.value.filter(h => h !== query);
+            history.unshift(query);
+            searchHistory.value = history.slice(0, 10); // 最多保存10条
+            localStorage.setItem('searchHistory', JSON.stringify(searchHistory.value));
+        }
+
+        function removeFromHistory(query) {
+            searchHistory.value = searchHistory.value.filter(h => h !== query);
+            localStorage.setItem('searchHistory', JSON.stringify(searchHistory.value));
+        }
+
+        function clearHistory() {
+            searchHistory.value = [];
+            localStorage.removeItem('searchHistory');
         }
 
         async function loadResources() {
@@ -246,6 +268,7 @@ createApp({
             isLoggedIn, username, currentPage, loading, error, loginForm, isDark,
             sidebarOpen, sidebarCollapsed,
             dashboard, channels, searchQuery, searchChannel, searchResults, searchPerformed,
+            searchHistory, removeFromHistory, clearHistory,
             resourceChannel, resourcePage, resourceTotalPages, resources,
             syncChannel, syncStatus, syncRunning,
             tasks, newTask,
