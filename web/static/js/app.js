@@ -2,7 +2,7 @@
  * TG 资源爬虫 - 前端应用
  */
 
-const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted, watch } = Vue;
 
 createApp({
     setup() {
@@ -12,7 +12,11 @@ createApp({
         const currentPage = ref('dashboard');
         const loading = ref(false);
         const error = ref('');
-        const isDark = ref(localStorage.getItem('theme') === 'dark' || !localStorage.getItem('theme'));
+        const isDark = ref(localStorage.getItem('theme') !== 'light');
+
+        // 侧边栏状态
+        const sidebarOpen = ref(false);
+        const sidebarCollapsed = ref(localStorage.getItem('sidebarCollapsed') === 'true');
 
         // 登录表单
         const loginForm = ref({ username: '', password: '' });
@@ -31,8 +35,17 @@ createApp({
         const syncChannel = ref('all');
         const syncStatus = ref({ running: false, message: '' });
 
+        // 定时任务
+        const tasks = ref([]);
+        const newTask = ref({ channel: 'all', mode: 'incremental', interval: 6 });
+
         const isLoggedIn = computed(() => !!token.value);
         const syncRunning = computed(() => syncStatus.value.running);
+
+        // 保存侧边栏状态
+        watch(sidebarCollapsed, (val) => {
+            localStorage.setItem('sidebarCollapsed', val);
+        });
 
         // 主题切换
         function toggleTheme() {
@@ -41,7 +54,6 @@ createApp({
             localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
         }
 
-        // 初始化主题
         function initTheme() {
             document.documentElement.classList.toggle('dark', isDark.value);
         }
@@ -179,6 +191,48 @@ createApp({
             }
         }
 
+        // 定时任务
+        async function loadTasks() {
+            try {
+                const data = await api('/tasks');
+                tasks.value = data.tasks;
+            } catch (e) {
+                console.error('加载任务失败:', e);
+            }
+        }
+
+        async function addTask() {
+            try {
+                await api('/tasks', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        channel: newTask.value.channel,
+                        mode: newTask.value.mode,
+                        interval_hours: parseInt(newTask.value.interval)
+                    })
+                });
+                loadTasks();
+                alert('任务已添加');
+            } catch (e) {
+                alert('添加失败: ' + e.message);
+            }
+        }
+
+        async function deleteTask(jobId) {
+            if (!confirm('确定删除此任务？')) return;
+            try {
+                await api(`/tasks/${jobId}`, { method: 'DELETE' });
+                loadTasks();
+            } catch (e) {
+                alert('删除失败: ' + e.message);
+            }
+        }
+
+        function formatDate(isoString) {
+            if (!isoString) return '-';
+            return new Date(isoString).toLocaleString('zh-CN');
+        }
+
         onMounted(() => {
             initTheme();
             if (isLoggedIn.value) {
@@ -190,10 +244,13 @@ createApp({
 
         return {
             isLoggedIn, username, currentPage, loading, error, loginForm, isDark,
+            sidebarOpen, sidebarCollapsed,
             dashboard, channels, searchQuery, searchChannel, searchResults, searchPerformed,
             resourceChannel, resourcePage, resourceTotalPages, resources,
             syncChannel, syncStatus, syncRunning,
-            toggleTheme, login, logout, loadDashboard, doSearch, loadResources, copyLink, syncNow
+            tasks, newTask,
+            toggleTheme, login, logout, loadDashboard, doSearch, loadResources, copyLink, syncNow,
+            loadTasks, addTask, deleteTask, formatDate
         };
     }
 }).mount('#app');

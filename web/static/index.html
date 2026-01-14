@@ -11,11 +11,7 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-                    animation: {
-                        'spin-slow': 'spin 3s linear infinite',
-                        'pulse-slow': 'pulse 3s ease-in-out infinite',
-                    }
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
                 }
             }
         }
@@ -28,7 +24,6 @@
     <div id="app">
         <!-- 登录页面 -->
         <div v-if="!isLoggedIn" class="min-h-screen flex">
-            <!-- 左侧装饰 -->
             <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
                 <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200"
                     class="absolute inset-0 w-full h-full object-cover" alt="bg">
@@ -41,16 +36,10 @@
                         </div>
                         <span class="text-2xl font-bold text-white">TG 资源爬虫</span>
                     </div>
-                    <h1 class="text-4xl font-bold text-white mb-4 leading-tight">
-                        智能采集<br>115 网盘资源
-                    </h1>
-                    <p class="text-white/70 text-lg max-w-md">
-                        自动爬取 Telegram 公开频道，智能解析并提取 115 网盘链接，支持多频道管理与关键词搜索。
-                    </p>
+                    <h1 class="text-4xl font-bold text-white mb-4 leading-tight">智能采集<br>115 网盘资源</h1>
+                    <p class="text-white/70 text-lg max-w-md">自动爬取 Telegram 公开频道，智能解析并提取 115 网盘链接。</p>
                 </div>
             </div>
-
-            <!-- 右侧登录表单 -->
             <div class="flex-1 flex items-center justify-center p-8">
                 <div class="w-full max-w-md">
                     <div class="lg:hidden flex items-center gap-3 mb-10">
@@ -59,10 +48,8 @@
                         </div>
                         <span class="text-xl font-bold">TG 资源爬虫</span>
                     </div>
-
                     <h2 class="text-2xl font-bold mb-2">欢迎回来</h2>
                     <p class="text-slate-500 dark:text-slate-400 mb-8">请登录您的账户</p>
-
                     <form @submit.prevent="login" class="space-y-5">
                         <div>
                             <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">用户名</label>
@@ -76,7 +63,6 @@
                                     placeholder="请输入用户名">
                             </div>
                         </div>
-
                         <div>
                             <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">密码</label>
                             <div class="relative">
@@ -89,7 +75,6 @@
                                     placeholder="请输入密码">
                             </div>
                         </div>
-
                         <button type="submit" :disabled="loading"
                             class="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                             <svg v-if="loading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
@@ -100,7 +85,6 @@
                             </svg>
                             <span>{{ loading ? '登录中...' : '登 录' }}</span>
                         </button>
-
                         <p v-if="error" class="text-red-500 text-sm text-center">{{ error }}</p>
                     </form>
                 </div>
@@ -109,64 +93,71 @@
 
         <!-- 主界面 -->
         <div v-else class="flex min-h-screen">
+            <!-- 移动端遮罩 -->
+            <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
+
             <!-- 侧边栏 -->
-            <aside
-                class="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col fixed h-screen">
+            <aside :class="['fixed h-screen z-50 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300',
+                      sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+                      sidebarCollapsed ? 'w-20' : 'w-64']">
                 <!-- Logo -->
-                <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-200 dark:border-slate-700">
-                    <div class="w-9 h-9 bg-violet-600 rounded-lg flex items-center justify-center">
+                <div class="h-16 flex items-center gap-3 px-4 border-b border-slate-200 dark:border-slate-700">
+                    <div class="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center flex-shrink-0">
                         <img src="https://unpkg.com/lucide-static@latest/icons/film.svg" class="w-5 h-5 invert">
                     </div>
-                    <span class="font-bold text-lg">TG 资源爬虫</span>
+                    <span v-if="!sidebarCollapsed" class="font-bold text-lg whitespace-nowrap">TG 资源爬虫</span>
                 </div>
 
                 <!-- 导航 -->
-                <nav class="flex-1 p-4 space-y-1">
-                    <a href="#" @click.prevent="currentPage = 'dashboard'" :class="['flex items-center gap-3 h-11 px-4 rounded-xl font-medium transition-all', 
-                     currentPage === 'dashboard' 
-                       ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' 
-                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
+                <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+                    <a href="#" @click.prevent="currentPage = 'dashboard'; sidebarOpen = false"
+                        :class="['flex items-center gap-3 h-11 px-3 rounded-xl font-medium transition-all', 
+                     currentPage === 'dashboard' ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
                         <img src="https://unpkg.com/lucide-static@latest/icons/layout-dashboard.svg"
-                            :class="['w-5 h-5', currentPage === 'dashboard' ? '' : 'opacity-60 dark:invert']">
-                        <span>仪表盘</span>
+                            class="w-5 h-5 flex-shrink-0 dark:invert opacity-70">
+                        <span v-if="!sidebarCollapsed">仪表盘</span>
                     </a>
-                    <a href="#" @click.prevent="currentPage = 'search'" :class="['flex items-center gap-3 h-11 px-4 rounded-xl font-medium transition-all', 
-                     currentPage === 'search' 
-                       ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' 
-                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
+                    <a href="#" @click.prevent="currentPage = 'search'; sidebarOpen = false"
+                        :class="['flex items-center gap-3 h-11 px-3 rounded-xl font-medium transition-all', 
+                     currentPage === 'search' ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
                         <img src="https://unpkg.com/lucide-static@latest/icons/search.svg"
-                            :class="['w-5 h-5', currentPage === 'search' ? '' : 'opacity-60 dark:invert']">
-                        <span>影视搜索</span>
+                            class="w-5 h-5 flex-shrink-0 dark:invert opacity-70">
+                        <span v-if="!sidebarCollapsed">影视搜索</span>
                     </a>
-                    <a href="#" @click.prevent="currentPage = 'resources'" :class="['flex items-center gap-3 h-11 px-4 rounded-xl font-medium transition-all', 
-                     currentPage === 'resources' 
-                       ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' 
-                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
+                    <a href="#" @click.prevent="currentPage = 'resources'; loadResources(); sidebarOpen = false"
+                        :class="['flex items-center gap-3 h-11 px-3 rounded-xl font-medium transition-all', 
+                     currentPage === 'resources' ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
                         <img src="https://unpkg.com/lucide-static@latest/icons/database.svg"
-                            :class="['w-5 h-5', currentPage === 'resources' ? '' : 'opacity-60 dark:invert']">
-                        <span>数据库</span>
+                            class="w-5 h-5 flex-shrink-0 dark:invert opacity-70">
+                        <span v-if="!sidebarCollapsed">数据库</span>
                     </a>
-                    <a href="#" @click.prevent="currentPage = 'sync'" :class="['flex items-center gap-3 h-11 px-4 rounded-xl font-medium transition-all', 
-                     currentPage === 'sync' 
-                       ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' 
-                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
+                    <a href="#" @click.prevent="currentPage = 'sync'; loadTasks(); sidebarOpen = false"
+                        :class="['flex items-center gap-3 h-11 px-3 rounded-xl font-medium transition-all', 
+                     currentPage === 'sync' ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
                         <img src="https://unpkg.com/lucide-static@latest/icons/refresh-cw.svg"
-                            :class="['w-5 h-5', currentPage === 'sync' ? '' : 'opacity-60 dark:invert']">
-                        <span>同步管理</span>
+                            class="w-5 h-5 flex-shrink-0 dark:invert opacity-70">
+                        <span v-if="!sidebarCollapsed">同步管理</span>
                     </a>
                 </nav>
 
-                <!-- 底部用户信息 -->
-                <div class="p-4 border-t border-slate-200 dark:border-slate-700">
+                <!-- 折叠按钮 -->
+                <button @click="sidebarCollapsed = !sidebarCollapsed"
+                    class="hidden lg:flex items-center justify-center h-12 border-t border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <img :src="sidebarCollapsed ? 'https://unpkg.com/lucide-static@latest/icons/chevron-right.svg' : 'https://unpkg.com/lucide-static@latest/icons/chevron-left.svg'"
+                        class="w-5 h-5 dark:invert opacity-60">
+                </button>
+
+                <!-- 用户信息 -->
+                <div class="p-3 border-t border-slate-200 dark:border-slate-700">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm">
+                                class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
                                 {{ username.charAt(0).toUpperCase() }}
                             </div>
-                            <span class="font-medium text-sm">{{ username }}</span>
+                            <span v-if="!sidebarCollapsed" class="font-medium text-sm truncate">{{ username }}</span>
                         </div>
-                        <button @click="logout"
+                        <button v-if="!sidebarCollapsed" @click="logout"
                             class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                             title="退出登录">
                             <img src="https://unpkg.com/lucide-static@latest/icons/log-out.svg"
@@ -177,16 +168,22 @@
             </aside>
 
             <!-- 主内容区 -->
-            <main class="flex-1 ml-64">
+            <main :class="['flex-1 transition-all duration-300', sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64']">
                 <!-- 顶部栏 -->
                 <header
-                    class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-8 sticky top-0 z-10">
-                    <h1 class="text-xl font-semibold">
-                        {{ currentPage === 'dashboard' ? '仪表盘' : currentPage === 'search' ? '影视搜索' : currentPage ===
-                        'resources' ? '数据库' : '同步管理' }}
-                    </h1>
+                    class="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-10">
                     <div class="flex items-center gap-4">
-                        <!-- 暗亮模式切换 -->
+                        <!-- 移动端菜单按钮 -->
+                        <button @click="sidebarOpen = true"
+                            class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+                            <img src="https://unpkg.com/lucide-static@latest/icons/menu.svg"
+                                class="w-6 h-6 dark:invert">
+                        </button>
+                        <h1 class="text-lg lg:text-xl font-semibold">
+                            {{ { dashboard: '仪表盘', search: '影视搜索', resources: '数据库', sync: '同步管理' }[currentPage] }}
+                        </h1>
+                    </div>
+                    <div class="flex items-center gap-2 lg:gap-4">
                         <button @click="toggleTheme"
                             class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
                             <img :src="isDark ? 'https://unpkg.com/lucide-static@latest/icons/sun.svg' : 'https://unpkg.com/lucide-static@latest/icons/moon.svg'"
@@ -200,102 +197,94 @@
                     </div>
                 </header>
 
-                <div class="p-8">
+                <div class="p-4 lg:p-8">
                     <!-- 仪表盘 -->
-                    <div v-if="currentPage === 'dashboard'" class="space-y-8">
-                        <!-- 统计卡片 -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div v-if="currentPage === 'dashboard'" class="space-y-6 lg:space-y-8">
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
                             <div
-                                class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-                                <div class="flex items-center justify-between mb-4">
+                                class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-3 lg:mb-4">
                                     <div
-                                        class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                        class="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                                         <img src="https://unpkg.com/lucide-static@latest/icons/folder.svg"
-                                            class="w-6 h-6 text-blue-600">
+                                            class="w-5 h-5 lg:w-6 lg:h-6">
                                     </div>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">总计</span>
                                 </div>
-                                <div class="text-3xl font-bold">{{ dashboard.total_resources?.toLocaleString() || 0 }}
-                                </div>
-                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">资源总数</div>
+                                <div class="text-2xl lg:text-3xl font-bold">{{
+                                    dashboard.total_resources?.toLocaleString() || 0 }}</div>
+                                <div class="text-xs lg:text-sm text-slate-500 dark:text-slate-400 mt-1">资源总数</div>
                             </div>
-
                             <div
-                                class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-                                <div class="flex items-center justify-between mb-4">
+                                class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-3 lg:mb-4">
                                     <div
-                                        class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                        class="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                                         <img src="https://unpkg.com/lucide-static@latest/icons/check-circle.svg"
-                                            class="w-6 h-6 text-emerald-600">
+                                            class="w-5 h-5 lg:w-6 lg:h-6">
                                     </div>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">已完成</span>
                                 </div>
-                                <div class="text-3xl font-bold">{{ dashboard.total_parsed?.toLocaleString() || 0 }}
-                                </div>
-                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">已解析链接</div>
+                                <div class="text-2xl lg:text-3xl font-bold">{{ dashboard.total_parsed?.toLocaleString()
+                                    || 0 }}</div>
+                                <div class="text-xs lg:text-sm text-slate-500 dark:text-slate-400 mt-1">已解析</div>
                             </div>
-
                             <div
-                                class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-                                <div class="flex items-center justify-between mb-4">
+                                class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-3 lg:mb-4">
                                     <div
-                                        class="w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                                        class="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
                                         <img src="https://unpkg.com/lucide-static@latest/icons/tv.svg"
-                                            class="w-6 h-6 text-violet-600">
+                                            class="w-5 h-5 lg:w-6 lg:h-6">
                                     </div>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">频道</span>
                                 </div>
-                                <div class="text-3xl font-bold">{{ dashboard.channels?.length || 0 }}</div>
-                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">监控频道</div>
+                                <div class="text-2xl lg:text-3xl font-bold">{{ dashboard.channels?.length || 0 }}</div>
+                                <div class="text-xs lg:text-sm text-slate-500 dark:text-slate-400 mt-1">频道数</div>
                             </div>
-
                             <div
-                                class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-                                <div class="flex items-center justify-between mb-4">
+                                class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-3 lg:mb-4">
                                     <div
-                                        :class="['w-12 h-12 rounded-xl flex items-center justify-center', dashboard.sync_status?.running ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-slate-700']">
+                                        :class="['w-10 h-10 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center', dashboard.sync_status?.running ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-slate-100 dark:bg-slate-700']">
                                         <img src="https://unpkg.com/lucide-static@latest/icons/activity.svg"
-                                            :class="['w-6 h-6', dashboard.sync_status?.running ? 'animate-pulse' : '']">
+                                            :class="['w-5 h-5 lg:w-6 lg:h-6', dashboard.sync_status?.running ? 'animate-pulse' : '']">
                                     </div>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">状态</span>
                                 </div>
-                                <div class="text-3xl font-bold">{{ dashboard.sync_status?.running ? '同步中' : '空闲' }}
-                                </div>
-                                <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">系统状态</div>
+                                <div class="text-2xl lg:text-3xl font-bold">{{ dashboard.sync_status?.running ? '同步中' :
+                                    '空闲' }}</div>
+                                <div class="text-xs lg:text-sm text-slate-500 dark:text-slate-400 mt-1">状态</div>
                             </div>
                         </div>
 
-                        <!-- 频道列表 -->
                         <div>
                             <h3 class="text-lg font-semibold mb-4">频道详情</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <div v-for="ch in dashboard.channels" :key="ch.id"
-                                    class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600 transition-colors">
+                                    class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-5 border border-slate-200 dark:border-slate-700">
                                     <div class="flex items-center justify-between mb-4">
                                         <div>
                                             <h4 class="font-semibold">{{ ch.name }}</h4>
                                             <span class="text-xs text-slate-500 dark:text-slate-400">{{ ch.id }}</span>
                                         </div>
                                         <span
-                                            class="px-2.5 py-1 text-xs font-medium rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
-                                            {{ ch.parse_mode }}
-                                        </span>
+                                            class="px-2 py-1 text-xs font-medium rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">{{
+                                            ch.parse_mode }}</span>
                                     </div>
-                                    <div class="flex justify-between">
-                                        <div class="text-center">
-                                            <div class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ ch.total
-                                                }}</div>
-                                            <div class="text-xs text-slate-500 dark:text-slate-400">总数</div>
+                                    <div class="flex justify-between text-center">
+                                        <div>
+                                            <div class="text-lg lg:text-xl font-bold text-blue-600 dark:text-blue-400">
+                                                {{ ch.total }}</div>
+                                            <div class="text-xs text-slate-500">总数</div>
                                         </div>
-                                        <div class="text-center">
-                                            <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400">{{
-                                                ch.parsed }}</div>
-                                            <div class="text-xs text-slate-500 dark:text-slate-400">已解析</div>
+                                        <div>
+                                            <div
+                                                class="text-lg lg:text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                                                {{ ch.parsed }}</div>
+                                            <div class="text-xs text-slate-500">已解析</div>
                                         </div>
-                                        <div class="text-center">
-                                            <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{
-                                                ch.unparsed }}</div>
-                                            <div class="text-xs text-slate-500 dark:text-slate-400">待解析</div>
+                                        <div>
+                                            <div
+                                                class="text-lg lg:text-xl font-bold text-amber-600 dark:text-amber-400">
+                                                {{ ch.unparsed }}</div>
+                                            <div class="text-xs text-slate-500">待解析</div>
                                         </div>
                                     </div>
                                 </div>
@@ -306,66 +295,69 @@
                     <!-- 搜索页面 -->
                     <div v-if="currentPage === 'search'" class="space-y-6">
                         <div
-                            class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-                            <div class="flex flex-col sm:flex-row gap-4">
+                            class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700">
+                            <div class="flex flex-col gap-3">
                                 <div class="relative flex-1">
                                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                         <img src="https://unpkg.com/lucide-static@latest/icons/search.svg"
                                             class="w-5 h-5 opacity-40 dark:invert">
                                     </div>
                                     <input type="text" v-model="searchQuery" @keyup.enter="doSearch"
-                                        class="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                        class="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none"
                                         placeholder="输入关键词搜索...">
                                 </div>
-                                <select v-model="searchChannel"
-                                    class="h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none min-w-[160px]">
-                                    <option value="">全部频道</option>
-                                    <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
-                                </select>
-                                <button @click="doSearch" :disabled="loading"
-                                    class="h-12 px-8 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition-all disabled:opacity-50">
-                                    {{ loading ? '搜索中...' : '搜 索' }}
-                                </button>
+                                <div class="flex gap-3">
+                                    <select v-model="searchChannel"
+                                        class="flex-1 h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none">
+                                        <option value="">全部频道</option>
+                                        <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}
+                                        </option>
+                                    </select>
+                                    <button @click="doSearch" :disabled="loading"
+                                        class="h-12 px-6 lg:px-8 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold disabled:opacity-50 whitespace-nowrap">
+                                        {{ loading ? '搜索中' : '搜索' }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <div v-if="searchResults.length > 0">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="text-slate-600 dark:text-slate-400">找到 <span
+                            <div class="mb-4"><span class="text-slate-600 dark:text-slate-400">找到 <span
                                         class="font-semibold text-slate-900 dark:text-white">{{ searchResults.length
-                                        }}</span> 条结果</span>
-                            </div>
+                                        }}</span> 条结果</span></div>
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 <div v-for="item in searchResults" :key="item.message_id"
-                                    class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all">
+                                    class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-5 border border-slate-200 dark:border-slate-700">
                                     <div class="flex items-start justify-between mb-3">
-                                        <h4 class="font-semibold text-lg leading-tight flex-1 mr-4">{{ item.title }}
-                                        </h4>
+                                        <h4 class="font-semibold text-base lg:text-lg leading-tight flex-1 mr-3">{{
+                                            item.title }}</h4>
                                         <span
-                                            class="px-2.5 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                                            {{ item.channel_name }}
-                                        </span>
+                                            class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 whitespace-nowrap">{{
+                                            item.channel_name }}</span>
                                     </div>
-                                    <div v-if="item.tags" class="flex flex-wrap gap-2 mb-4">
+                                    <div v-if="item.tags" class="flex flex-wrap gap-1.5 mb-4">
                                         <span v-for="tag in item.tags.split(',').slice(0,5)" :key="tag"
-                                            class="px-2 py-0.5 text-xs rounded-md bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400">
-                                            {{ tag }}
-                                        </span>
+                                            class="px-2 py-0.5 text-xs rounded-md bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400">{{
+                                            tag }}</span>
                                     </div>
-                                    <div class="flex items-center gap-3">
+                                    <div class="flex flex-wrap items-center gap-2">
                                         <button v-if="item.pan_url && item.pan_url !== 'N/A'"
                                             @click="copyLink(item.pan_url)"
-                                            class="flex items-center gap-2 h-10 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-all">
+                                            class="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">
                                             <img src="https://unpkg.com/lucide-static@latest/icons/copy.svg"
-                                                class="w-4 h-4 invert">
-                                            复制链接
+                                                class="w-4 h-4 invert">复制
                                         </button>
                                         <a v-if="item.pan_url && item.pan_url !== 'N/A'" :href="item.pan_url"
                                             target="_blank"
-                                            class="flex items-center gap-2 h-10 px-4 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm transition-all">
+                                            class="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm">
                                             <img src="https://unpkg.com/lucide-static@latest/icons/external-link.svg"
-                                                class="w-4 h-4 opacity-60 dark:invert">
-                                            打开
+                                                class="w-4 h-4 opacity-60 dark:invert">打开
+                                        </a>
+                                        <a :href="'https://t.me/s/' + item.channel_id + '/' + item.message_id"
+                                            target="_blank"
+                                            class="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-sm">
+                                            <img src="https://unpkg.com/lucide-static@latest/icons/message-circle.svg"
+                                                class="w-4 h-4">原消息
                                         </a>
                                         <span v-if="!item.pan_url || item.pan_url === 'N/A'"
                                             class="text-slate-400 text-sm">暂无链接</span>
@@ -374,27 +366,44 @@
                             </div>
                         </div>
                         <div v-else-if="searchPerformed"
-                            class="bg-white dark:bg-slate-800 rounded-2xl p-16 border border-slate-200 dark:border-slate-700 text-center">
+                            class="bg-white dark:bg-slate-800 rounded-xl p-12 border border-slate-200 dark:border-slate-700 text-center">
                             <img src="https://unpkg.com/lucide-static@latest/icons/search-x.svg"
-                                class="w-16 h-16 mx-auto opacity-20 dark:invert mb-4">
+                                class="w-12 h-12 mx-auto opacity-20 dark:invert mb-4">
                             <p class="text-slate-500 dark:text-slate-400">没有找到匹配的资源</p>
                         </div>
                     </div>
 
                     <!-- 数据库页面 -->
-                    <div v-if="currentPage === 'resources'" class="space-y-6">
+                    <div v-if="currentPage === 'resources'" class="space-y-4 lg:space-y-6">
                         <div
-                            class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            class="bg-white dark:bg-slate-800 rounded-xl p-3 lg:p-4 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                             <select v-model="resourceChannel" @change="resourcePage = 1; loadResources()"
                                 class="h-10 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none">
                                 <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
                             </select>
-                            <span class="text-sm text-slate-500 dark:text-slate-400">第 {{ resourcePage }} / {{
-                                resourceTotalPages }} 页</span>
+                            <span class="text-sm text-slate-500 dark:text-slate-400 text-center">第 {{ resourcePage }} /
+                                {{ resourceTotalPages }} 页</span>
                         </div>
 
+                        <!-- 移动端卡片视图 -->
+                        <div class="lg:hidden space-y-3">
+                            <div v-for="item in resources" :key="item.message_id"
+                                class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h4 class="font-medium flex-1 mr-2">{{ item.title }}</h4>
+                                    <span v-if="item.pan_url && item.pan_url !== 'N/A'"
+                                        class="text-emerald-500">✓</span>
+                                    <span v-else class="text-amber-400">○</span>
+                                </div>
+                                <div v-if="item.tags" class="text-xs text-slate-500 mb-3 truncate">{{ item.tags }}</div>
+                                <button v-if="item.pan_url && item.pan_url !== 'N/A'" @click="copyLink(item.pan_url)"
+                                    class="w-full h-9 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm">复制链接</button>
+                            </div>
+                        </div>
+
+                        <!-- 桌面端表格 -->
                         <div
-                            class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            class="hidden lg:block bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                             <table class="w-full">
                                 <thead>
                                     <tr class="border-b border-slate-200 dark:border-slate-700">
@@ -414,7 +423,7 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="item in resources" :key="item.message_id"
-                                        class="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                        class="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30">
                                         <td class="p-4 max-w-xs truncate font-medium">{{ item.title }}</td>
                                         <td class="p-4 text-slate-500 dark:text-slate-400 text-sm max-w-xs truncate">{{
                                             item.tags }}</td>
@@ -426,9 +435,7 @@
                                         <td class="p-4 text-center">
                                             <button v-if="item.pan_url && item.pan_url !== 'N/A'"
                                                 @click="copyLink(item.pan_url)"
-                                                class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm transition-colors">
-                                                复制
-                                            </button>
+                                                class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm">复制</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -437,49 +444,88 @@
 
                         <div class="flex justify-center gap-3">
                             <button @click="resourcePage--; loadResources()" :disabled="resourcePage <= 1"
-                                class="h-10 px-5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-                                上一页
-                            </button>
+                                class="h-10 px-5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">上一页</button>
                             <button @click="resourcePage++; loadResources()"
                                 :disabled="resourcePage >= resourceTotalPages"
-                                class="h-10 px-5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-                                下一页
-                            </button>
+                                class="h-10 px-5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">下一页</button>
                         </div>
                     </div>
 
                     <!-- 同步管理 -->
                     <div v-if="currentPage === 'sync'" class="space-y-6">
+                        <!-- 手动同步 -->
                         <div
-                            class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+                            class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700">
                             <h3 class="font-semibold mb-4 flex items-center gap-2">
                                 <img src="https://unpkg.com/lucide-static@latest/icons/play.svg"
-                                    class="w-5 h-5 opacity-60 dark:invert">
-                                手动同步
+                                    class="w-5 h-5 opacity-60 dark:invert">手动同步
                             </h3>
-                            <div class="flex flex-wrap gap-4 items-center">
+                            <div class="flex flex-col sm:flex-row gap-3">
                                 <select v-model="syncChannel"
-                                    class="h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none min-w-[180px]">
+                                    class="h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none">
                                     <option value="all">全部频道</option>
                                     <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
                                 </select>
                                 <button @click="syncNow('incremental')" :disabled="syncRunning"
-                                    class="h-11 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all disabled:opacity-50 flex items-center gap-2">
+                                    class="h-11 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2">
                                     <img src="https://unpkg.com/lucide-static@latest/icons/refresh-cw.svg"
-                                        :class="['w-4 h-4 invert', syncRunning ? 'animate-spin' : '']">
-                                    增量同步
+                                        :class="['w-4 h-4 invert', syncRunning ? 'animate-spin' : '']">增量同步
                                 </button>
                                 <button @click="syncNow('full')" :disabled="syncRunning"
-                                    class="h-11 px-6 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium transition-all disabled:opacity-50 flex items-center gap-2">
+                                    class="h-11 px-6 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2">
                                     <img src="https://unpkg.com/lucide-static@latest/icons/download.svg"
-                                        class="w-4 h-4 invert">
-                                    全量同步
+                                        class="w-4 h-4 invert">全量同步
                                 </button>
                             </div>
                             <div v-if="syncStatus.message"
                                 :class="['mt-4 p-4 rounded-xl text-sm', syncStatus.running ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400']">
                                 {{ syncStatus.message }}
                             </div>
+                        </div>
+
+                        <!-- 定时任务 -->
+                        <div
+                            class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700">
+                            <h3 class="font-semibold mb-4 flex items-center gap-2">
+                                <img src="https://unpkg.com/lucide-static@latest/icons/clock.svg"
+                                    class="w-5 h-5 opacity-60 dark:invert">定时任务
+                            </h3>
+                            <div class="flex flex-col sm:flex-row gap-3 mb-6">
+                                <select v-model="newTask.channel"
+                                    class="h-10 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none">
+                                    <option value="all">全部频道</option>
+                                    <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
+                                </select>
+                                <select v-model="newTask.mode"
+                                    class="h-10 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none">
+                                    <option value="incremental">增量同步</option>
+                                    <option value="full">全量同步</option>
+                                </select>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" v-model="newTask.interval" min="1" max="168"
+                                        class="w-20 h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none text-center">
+                                    <span class="text-sm text-slate-500">小时</span>
+                                </div>
+                                <button @click="addTask"
+                                    class="h-10 px-6 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium whitespace-nowrap">添加</button>
+                            </div>
+
+                            <div v-if="tasks.length > 0" class="space-y-2">
+                                <div v-for="task in tasks" :key="task.id"
+                                    class="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900">
+                                    <div>
+                                        <div class="font-medium">{{ task.name }}</div>
+                                        <div class="text-sm text-slate-500 dark:text-slate-400">下次: {{
+                                            formatDate(task.next_run) }}</div>
+                                    </div>
+                                    <button @click="deleteTask(task.id)"
+                                        class="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500">
+                                        <img src="https://unpkg.com/lucide-static@latest/icons/trash-2.svg"
+                                            class="w-5 h-5">
+                                    </button>
+                                </div>
+                            </div>
+                            <p v-else class="text-slate-400 text-center py-6">暂无定时任务</p>
                         </div>
                     </div>
                 </div>
