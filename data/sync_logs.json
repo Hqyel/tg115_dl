@@ -1,5 +1,21 @@
 [
   {
+    "id": 1768374896123,
+    "timestamp": "2026-01-14T15:14:56.123870",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步完成: 懒狗集中营",
+    "status": "success"
+  },
+  {
+    "id": 1768374885247,
+    "timestamp": "2026-01-14T15:14:45.247975",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步开始: 懒狗集中营 (full)",
+    "status": "info"
+  },
+  {
     "id": 1768374647729,
     "timestamp": "2026-01-14T15:10:47.729448",
     "type": "sync",
