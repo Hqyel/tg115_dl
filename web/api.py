@@ -83,7 +83,13 @@ def save_tasks():
         interval = 6
         if hasattr(job.trigger, 'interval'):
           interval = int(job.trigger.interval.total_seconds() / 3600)
-        tasks.append({'channel': parts[1], 'mode': parts[2], 'interval_hours': interval})
+        next_run = job.next_run_time.isoformat() if job.next_run_time else None
+        tasks.append({
+          'channel': parts[1],
+          'mode': parts[2],
+          'interval_hours': interval,
+          'next_run': next_run
+        })
   with open(TASKS_FILE, 'w', encoding='utf-8') as f:
     json.dump(tasks, f, ensure_ascii=False, indent=2)
 
@@ -96,18 +102,24 @@ def load_saved_tasks():
     with open(TASKS_FILE, 'r', encoding='utf-8') as f:
       tasks = json.load(f)
     for task in tasks:
-      add_scheduled_job(task['channel'], task['mode'], task['interval_hours'])
+      add_scheduled_job(
+        task['channel'],
+        task['mode'],
+        task['interval_hours'],
+        task.get('next_run')
+      )
   except Exception as e:
     print(f"加载任务失败: {e}")
 
 
-def add_scheduled_job(channel_id: str, mode: str, interval_hours: int) -> str:
+def add_scheduled_job(channel_id: str, mode: str, interval_hours: int, next_run: str = None) -> str:
   """添加定时任务"""
   scheduler = get_scheduler()
   if not scheduler:
     raise Exception("APScheduler 未安装")
 
   from apscheduler.triggers.interval import IntervalTrigger
+  from datetime import datetime, timedelta
 
   job_id = f"sync_{channel_id}_{mode}"
   if scheduler.get_job(job_id):
@@ -122,8 +134,27 @@ def add_scheduled_job(channel_id: str, mode: str, interval_hours: int) -> str:
     args = (channel_id, mode)
     name = f"同步 {CHANNELS.get(channel_id, {}).get('name', channel_id)} ({mode})"
 
-  scheduler.add_job(func, trigger=IntervalTrigger(hours=interval_hours),
-                    id=job_id, args=args, name=name, replace_existing=True)
+  # 计算下次执行时间
+  if next_run:
+    try:
+      next_run_time = datetime.fromisoformat(next_run)
+      # 如果保存的时间已过期，从当前时间开始计算
+      if next_run_time < datetime.now(next_run_time.tzinfo):
+        next_run_time = None
+    except:
+      next_run_time = None
+  else:
+    next_run_time = None
+
+  scheduler.add_job(
+    func,
+    trigger=IntervalTrigger(hours=interval_hours),
+    id=job_id,
+    args=args,
+    name=name,
+    replace_existing=True,
+    next_run_time=next_run_time
+  )
   save_tasks()
   return job_id
 
