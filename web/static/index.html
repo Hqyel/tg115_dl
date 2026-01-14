@@ -672,23 +672,24 @@
                         </div>
                     </div>
                 </div>
+            </main>
         </div>
-        </main>
-    </div>
 
-    <!-- 原始卡片预览模态框 -->
-    <div v-if="showCardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-        @click.self="closeCardPreview">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-                <h3 class="text-lg font-semibold">原始消息卡片</h3>
-                <button @click="closeCardPreview" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
-                    <img src="https://unpkg.com/lucide-static@latest/icons/x.svg" class="w-5 h-5 dark:invert">
-                </button>
+        <!-- 原始卡片预览模态框 -->
+        <div v-if="showCardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+            @click.self="closeCardPreview">
+            <div
+                class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl">
+                <div
+                    class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                    <h3 class="text-lg font-semibold">原始消息卡片</h3>
+                    <button @click="closeCardPreview" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+                        <img src="https://unpkg.com/lucide-static@latest/icons/x.svg" class="w-5 h-5 dark:invert">
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[calc(80vh-80px)] tg-card-preview" v-html="cardModalHtml"></div>
             </div>
-            <div class="p-6 overflow-y-auto max-h-[calc(80vh-80px)] tg-card-preview" v-html="cardModalHtml"></div>
         </div>
-    </div>
     </div>
 
     <!-- Telegram 卡片样式 -->
