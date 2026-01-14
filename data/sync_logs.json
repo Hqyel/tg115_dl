@@ -1,5 +1,37 @@
 [
   {
+    "id": 1768374647729,
+    "timestamp": "2026-01-14T15:10:47.729448",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步完成: 懒狗集中营",
+    "status": "success"
+  },
+  {
+    "id": 1768374635784,
+    "timestamp": "2026-01-14T15:10:35.784397",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步开始: 懒狗集中营 (full)",
+    "status": "info"
+  },
+  {
+    "id": 1768374574974,
+    "timestamp": "2026-01-14T15:09:34.974187",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步完成: 懒狗集中营",
+    "status": "success"
+  },
+  {
+    "id": 1768374564628,
+    "timestamp": "2026-01-14T15:09:24.628009",
+    "type": "sync",
+    "channel": "vip115hot",
+    "message": "手动同步开始: 懒狗集中营 (full)",
+    "status": "info"
+  },
+  {
     "id": 1768374545455,
     "timestamp": "2026-01-14T15:09:05.455616",
     "type": "sync",

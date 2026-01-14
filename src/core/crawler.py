@@ -270,14 +270,43 @@ class ChannelCrawler:
       return self._parse_inline_mode(div, message_id, tags, title_parts, text_div, raw_html)
 
   def _get_clean_html(self, div) -> str:
-    """获取清理后的消息卡片HTML"""
-    from copy import copy
-    # 复制元素以避免修改原始数据
-    div_copy = copy(div)
-    # 移除不必要的元素
-    for script in div_copy.find_all(['script', 'style']):
-      script.decompose()
-    return str(div_copy)
+    """获取清理后的消息卡片HTML（只保留消息内容）"""
+    from bs4 import BeautifulSoup
+    from copy import deepcopy
+
+    # 查找消息内容区域
+    message_elem = div.find("div", class_="tgme_widget_message")
+    if not message_elem:
+      return ""
+
+    # 深拷贝以避免修改原始数据
+    msg_copy = deepcopy(message_elem)
+
+    # 移除不需要的元素：头像、用户信息、时间、浏览量等
+    for selector in [
+      'a.tgme_widget_message_owner_name',  # 频道名
+      'div.tgme_widget_message_user',       # 用户头像
+      'a.tgme_widget_message_photo_wrap',   # 用户头像链接
+      'span.tgme_widget_message_views',     # 浏览量
+      'span.tgme_widget_message_date',      # 日期
+      'script', 'style'
+    ]:
+      for elem in msg_copy.select(selector):
+        elem.decompose()
+
+    # 处理背景图片：将 style="background-image:url(...)" 转换为 img 标签
+    for photo in msg_copy.find_all(class_="tgme_widget_message_photo"):
+      style = photo.get("style", "")
+      if "background-image" in style:
+        import re
+        match = re.search(r"url\(['\"]?([^'\"]+)['\"]?\)", style)
+        if match:
+          img_url = match.group(1)
+          # 创建 img 标签替换
+          img_tag = BeautifulSoup(f'<img src="{img_url}" style="max-width:100%;border-radius:8px;margin:8px 0;">', 'html.parser')
+          photo.replace_with(img_tag)
+
+    return str(msg_copy)
 
   def _parse_telegraph_mode(self, div, message_id: int, tags: list, title_parts: list, raw_html: str) -> Optional[Resource]:
     """解析 telegraph 模式（Lsp115）"""
