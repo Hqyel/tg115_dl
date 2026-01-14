@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TG 资源爬虫管理</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 登录页面 -->
+    <div v-if="!isLoggedIn" class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <h1>🎬 TG 资源爬虫</h1>
+          <p>请登录以继续</p>
+        </div>
+        <form @submit.prevent="login" class="login-form">
+          <div class="form-group">
+            <label>用户名</label>
+            <input type="text" v-model="loginForm.username" placeholder="请输入用户名" required>
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" v-model="loginForm.password" placeholder="请输入密码" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
+            {{ loading ? '登录中...' : '登录' }}
+          </button>
+          <p v-if="error" class="error-message">{{ error }}</p>
+        </form>
+      </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div v-else class="main-container">
+      <!-- 侧边栏 -->
+      <aside class="sidebar">
+        <div class="logo">
+          <span class="logo-icon">🎬</span>
+          <span class="logo-text">TG 资源爬虫</span>
+        </div>
+        <nav class="nav-menu">
+          <a href="#" :class="{ active: currentPage === 'dashboard' }" @click.prevent="currentPage = 'dashboard'">
+            <span class="nav-icon">📊</span> 仪表盘
+          </a>
+          <a href="#" :class="{ active: currentPage === 'search' }" @click.prevent="currentPage = 'search'">
+            <span class="nav-icon">🔍</span> 影视搜索
+          </a>
+          <a href="#" :class="{ active: currentPage === 'resources' }" @click.prevent="currentPage = 'resources'">
+            <span class="nav-icon">📁</span> 数据库
+          </a>
+          <a href="#" :class="{ active: currentPage === 'sync' }" @click.prevent="currentPage = 'sync'">
+            <span class="nav-icon">⚙️</span> 同步管理
+          </a>
+        </nav>
+        <div class="user-info">
+          <span>👤 {{ username }}</span>
+          <button @click="logout" class="btn-logout">退出</button>
+        </div>
+      </aside>
+
+      <!-- 主内容区 -->
+      <main class="main-content">
+        <!-- 仪表盘 -->
+        <div v-if="currentPage === 'dashboard'" class="page">
+          <h2 class="page-title">📊 仪表盘</h2>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">📚</div>
+              <div class="stat-info">
+                <div class="stat-value">{{ dashboard.total_resources }}</div>
+                <div class="stat-label">总资源数</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-info">
+                <div class="stat-value">{{ dashboard.total_parsed }}</div>
+                <div class="stat-label">已解析</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📺</div>
+              <div class="stat-info">
+                <div class="stat-value">{{ dashboard.channels?.length || 0 }}</div>
+                <div class="stat-label">频道数</div>
+              </div>
+            </div>
+            <div class="stat-card" :class="{ running: dashboard.sync_status?.running }">
+              <div class="stat-icon">{{ dashboard.sync_status?.running ? '🔄' : '⏸️' }}</div>
+              <div class="stat-info">
+                <div class="stat-value">{{ dashboard.sync_status?.running ? '运行中' : '空闲' }}</div>
+                <div class="stat-label">同步状态</div>
+              </div>
+            </div>
+          </div>
+
+          <h3>频道详情</h3>
+          <div class="channels-grid">
+            <div v-for="ch in dashboard.channels" :key="ch.id" class="channel-card">
+              <div class="channel-header">
+                <span class="channel-name">{{ ch.name }}</span>
+                <span class="channel-mode">{{ ch.parse_mode }}</span>
+              </div>
+              <div class="channel-stats">
+                <div class="channel-stat">
+                  <span class="value">{{ ch.total }}</span>
+                  <span class="label">总数</span>
+                </div>
+                <div class="channel-stat">
+                  <span class="value">{{ ch.parsed }}</span>
+                  <span class="label">已解析</span>
+                </div>
+                <div class="channel-stat">
+                  <span class="value">{{ ch.unparsed }}</span>
+                  <span class="label">待解析</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 搜索页面 -->
+        <div v-if="currentPage === 'search'" class="page">
+          <h2 class="page-title">🔍 影视搜索</h2>
+          
+          <div class="search-box">
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="输入关键词搜索..."
+              @keyup.enter="doSearch"
+              class="search-input"
+            >
+            <select v-model="searchChannel" class="search-select">
+              <option value="">全部频道</option>
+              <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
+            </select>
+            <button @click="doSearch" class="btn btn-primary" :disabled="loading">
+              {{ loading ? '搜索中...' : '搜索' }}
+            </button>
+          </div>
+
+          <div v-if="searchResults.length > 0" class="search-results">
+            <p class="results-count">找到 {{ searchResults.length }} 条结果</p>
+            <div class="results-grid">
+              <div v-for="item in searchResults" :key="item.message_id" class="result-card">
+                <div class="result-header">
+                  <h3 class="result-title">{{ item.title }}</h3>
+                  <span class="result-channel">{{ item.channel_name }}</span>
+                </div>
+                <div class="result-tags" v-if="item.tags">
+                  <span v-for="tag in item.tags.split(',')" :key="tag" class="tag">{{ tag }}</span>
+                </div>
+                <div class="result-actions">
+                  <button v-if="item.pan_url && item.pan_url !== 'N/A'" 
+                          @click="copyLink(item.pan_url)" 
+                          class="btn btn-success btn-sm">
+                    📋 复制链接
+                  </button>
+                  <a v-if="item.pan_url && item.pan_url !== 'N/A'" 
+                     :href="item.pan_url" 
+                     target="_blank" 
+                     class="btn btn-outline btn-sm">
+                    🔗 打开
+                  </a>
+                  <span v-if="!item.pan_url || item.pan_url === 'N/A'" class="no-link">暂无链接</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="searchPerformed" class="no-results">
+            <p>没有找到匹配的资源</p>
+          </div>
+        </div>
+
+        <!-- 数据库页面 -->
+        <div v-if="currentPage === 'resources'" class="page">
+          <h2 class="page-title">📁 数据库浏览</h2>
+          
+          <div class="filter-bar">
+            <select v-model="resourceChannel" @change="loadResources" class="filter-select">
+              <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
+            </select>
+            <span class="page-info">第 {{ resourcePage }} 页 / 共 {{ resourceTotalPages }} 页</span>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>标签</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in resources" :key="item.message_id">
+                <td class="title-cell">{{ item.title }}</td>
+                <td class="tags-cell">{{ item.tags }}</td>
+                <td><span :class="['status', item.pan_url && item.pan_url !== 'N/A' ? 'parsed' : 'unparsed']">
+                  {{ item.pan_url && item.pan_url !== 'N/A' ? '✅' : '⏳' }}
+                </span></td>
+                <td>
+                  <button v-if="item.pan_url && item.pan_url !== 'N/A'" 
+                          @click="copyLink(item.pan_url)" 
+                          class="btn btn-sm">复制</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="pagination">
+            <button @click="resourcePage--; loadResources()" :disabled="resourcePage <= 1" class="btn btn-sm">上一页</button>
+            <button @click="resourcePage++; loadResources()" :disabled="resourcePage >= resourceTotalPages" class="btn btn-sm">下一页</button>
+          </div>
+        </div>
+
+        <!-- 同步管理页面 -->
+        <div v-if="currentPage === 'sync'" class="page">
+          <h2 class="page-title">⚙️ 同步管理</h2>
+          
+          <div class="sync-section">
+            <h3>手动同步</h3>
+            <div class="sync-controls">
+              <select v-model="syncChannel" class="sync-select">
+                <option value="all">全部频道</option>
+                <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
+              </select>
+              <button @click="syncNow('incremental')" class="btn btn-primary" :disabled="syncRunning">
+                🔄 增量同步
+              </button>
+              <button @click="syncNow('full')" class="btn btn-warning" :disabled="syncRunning">
+                📥 全量同步
+              </button>
+            </div>
+            <div v-if="syncStatus.message" class="sync-status" :class="{ running: syncStatus.running }">
+              {{ syncStatus.message }}
+            </div>
+          </div>
+
+          <div class="tasks-section">
+            <h3>定时任务</h3>
+            <div class="add-task-form">
+              <select v-model="newTask.channel">
+                <option value="all">全部频道</option>
+                <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
+              </select>
+              <select v-model="newTask.mode">
+                <option value="incremental">增量同步</option>
+                <option value="full">全量同步</option>
+              </select>
+              <input type="number" v-model="newTask.interval" placeholder="间隔(小时)" min="1" max="168">
+              <button @click="addTask" class="btn btn-primary">添加任务</button>
+            </div>
+            
+            <table class="data-table" v-if="tasks.length > 0">
+              <thead>
+                <tr>
+                  <th>任务名称</th>
+                  <th>下次执行</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="task in tasks" :key="task.id">
+                  <td>{{ task.name }}</td>
+                  <td>{{ formatDate(task.next_run) }}</td>
+                  <td><button @click="deleteTask(task.id)" class="btn btn-danger btn-sm">删除</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <p v-else class="no-tasks">暂无定时任务</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
