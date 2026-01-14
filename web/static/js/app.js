@@ -40,6 +40,10 @@ createApp({
         const tasks = ref([]);
         const newTask = ref({ channel: 'all', mode: 'incremental', interval: 6 });
 
+        // 日志
+        const logs = ref([]);
+        const logFilter = ref('');
+
         const isLoggedIn = computed(() => !!token.value);
         const syncRunning = computed(() => syncStatus.value.running);
 
@@ -255,6 +259,28 @@ createApp({
             return new Date(isoString).toLocaleString('zh-CN');
         }
 
+        // 日志
+        async function loadLogs() {
+            try {
+                let url = '/logs?limit=100';
+                if (logFilter.value) url += `&type=${logFilter.value}`;
+                const data = await api(url);
+                logs.value = data.logs;
+            } catch (e) {
+                console.error('加载日志失败:', e);
+            }
+        }
+
+        async function clearLogs() {
+            if (!confirm('确定清空所有日志？')) return;
+            try {
+                await api('/logs', { method: 'DELETE' });
+                logs.value = [];
+            } catch (e) {
+                alert('清空失败: ' + e.message);
+            }
+        }
+
         onMounted(() => {
             initTheme();
             if (isLoggedIn.value) {
@@ -272,6 +298,7 @@ createApp({
             resourceChannel, resourcePage, resourceTotalPages, resources,
             syncChannel, syncStatus, syncRunning,
             tasks, newTask,
+            logs, logFilter, loadLogs, clearLogs,
             toggleTheme, login, logout, loadDashboard, doSearch, loadResources, copyLink, syncNow,
             loadTasks, addTask, deleteTask, formatDate
         };

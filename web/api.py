@@ -7,6 +7,7 @@ from pathlib import Path
 from flask import Blueprint, request, jsonify
 
 from .auth import login_required
+from .logs import add_log, get_logs, clear_logs
 
 from src.channels.config import CHANNELS
 from src.core.database import Database, StateManager
@@ -45,7 +46,8 @@ def get_scheduler():
 
 def sync_channel_task(channel_id: str, mode: str):
   """定时任务执行的同步函数"""
-  print(f"[定时任务] 同步 {channel_id} ({mode})")
+  channel_name = CHANNELS.get(channel_id, {}).get('name', channel_id)
+  add_log('scheduled', channel_id, f'定时任务开始: {channel_name} ({mode})', 'info')
   try:
     db = Database()
     state_manager = StateManager()
@@ -59,8 +61,9 @@ def sync_channel_task(channel_id: str, mode: str):
       unparsed = db.count_unparsed(channel_id)
       if unparsed > 0:
         parser.parse_batch(db, channel_id, limit=unparsed)
+    add_log('scheduled', channel_id, f'定时任务完成: {channel_name}', 'success')
   except Exception as e:
-    print(f"[定时任务] 同步失败: {e}")
+    add_log('scheduled', channel_id, f'定时任务失败: {str(e)}', 'error')
 
 
 def sync_all_task(mode: str):
@@ -255,8 +258,10 @@ def list_resources():
 
 def do_sync(channel_id: str, mode: str):
   global sync_status
+  channel_name = CHANNELS[channel_id]['name']
+  add_log('sync', channel_id, f'手动同步开始: {channel_name} ({mode})', 'info')
   try:
-    sync_status = {'running': True, 'channel': channel_id, 'message': f'正在同步 {CHANNELS[channel_id]["name"]}...'}
+    sync_status = {'running': True, 'channel': channel_id, 'message': f'正在同步 {channel_name}...'}
     db = Database()
     state_manager = StateManager()
     crawler = ChannelCrawler(channel_id)
@@ -273,9 +278,11 @@ def do_sync(channel_id: str, mode: str):
       if unparsed > 0:
         parser.parse_batch(db, channel_id, limit=unparsed)
 
-    sync_status = {'running': False, 'channel': None, 'message': f'{CHANNELS[channel_id]["name"]} 同步完成'}
+    sync_status = {'running': False, 'channel': None, 'message': f'{channel_name} 同步完成'}
+    add_log('sync', channel_id, f'手动同步完成: {channel_name}', 'success')
   except Exception as e:
     sync_status = {'running': False, 'channel': None, 'message': f'同步失败: {str(e)}'}
+    add_log('sync', channel_id, f'手动同步失败: {str(e)}', 'error')
 
 
 @api_bp.route('/sync', methods=['POST'])
@@ -388,3 +395,20 @@ def delete_task(job_id):
   scheduler.remove_job(job_id)
   save_tasks()
   return jsonify({'message': '任务已删除'})
+
+
+@api_bp.route('/logs', methods=['GET'])
+@login_required
+def list_logs():
+  limit = request.args.get('limit', 50, type=int)
+  log_type = request.args.get('type', None)
+  logs = get_logs(limit, log_type)
+  return jsonify({'logs': logs})
+
+
+@api_bp.route('/logs', methods=['DELETE'])
+@login_required
+def delete_logs():
+  clear_logs()
+  return jsonify({'message': '日志已清空'})
+
