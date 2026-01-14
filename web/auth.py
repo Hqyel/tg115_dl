@@ -93,9 +93,13 @@ def init_auth_db():
     """)
     cursor = conn.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
-      password_hash, salt = hash_password('admin123')
+      import os
+      default_user = os.environ.get('TG_WEB_USER', 'admin')
+      default_pass = os.environ.get('TG_WEB_PASSWORD', 'admin123')
+      print(f"[AUTH] 初始化默认用户: {default_user}")
+      password_hash, salt = hash_password(default_pass)
       conn.execute("INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)",
-                   ('admin', password_hash, salt))
+                   (default_user, password_hash, salt))
     conn.commit()
 
 
