@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    image: tg-spider-web:latest
+    container_name: tg-spider-web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TG_WEB_USER=admin
+      - TG_WEB_PASSWORD=admin123
+      - TZ=Asia/Shanghai
+    stdin_open: true
+    tty: true
