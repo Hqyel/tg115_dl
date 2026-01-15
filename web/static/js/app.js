@@ -223,7 +223,7 @@ createApp({
 
         function copyLink(url) {
             navigator.clipboard.writeText(url).then(() => {
-                alert('链接已复制到剪贴板');
+                showToast('链接已复制到剪贴板', 'success');
             }).catch(() => {
                 const input = document.createElement('input');
                 input.value = url;
@@ -231,7 +231,7 @@ createApp({
                 input.select();
                 document.execCommand('copy');
                 document.body.removeChild(input);
-                alert('链接已复制到剪贴板');
+                showToast('链接已复制到剪贴板', 'success');
             });
         }
 
@@ -288,19 +288,21 @@ createApp({
                     })
                 });
                 loadTasks();
-                alert('任务已添加');
+                showToast('任务已添加', 'success');
             } catch (e) {
-                alert('添加失败: ' + e.message);
+                showToast('添加失败: ' + e.message, 'error');
             }
         }
 
         async function deleteTask(jobId) {
-            if (!confirm('确定删除此任务？')) return;
+            const confirmed = await showConfirm('删除任务', '确定要删除此定时任务吗？');
+            if (!confirmed) return;
             try {
                 await api(`/tasks/${jobId}`, { method: 'DELETE' });
                 loadTasks();
+                showToast('任务已删除', 'success');
             } catch (e) {
-                alert('删除失败: ' + e.message);
+                showToast('删除失败: ' + e.message, 'error');
             }
         }
 
