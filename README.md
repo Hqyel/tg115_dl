@@ -91,9 +91,28 @@ python run_web.py --port 8080
 
 访问 http://localhost:5000，默认账号：`admin` / `admin123`（请及时修改密码）
 
+### Docker 部署
+
+```bash
+# 构建镜像
+docker build -t tg-dl .
+
+# 运行容器
+docker run -d -p 5000:5000 \
+  -e TG_WEB_USER=admin \
+  -e TG_WEB_PASSWORD=your_password \
+  -e CMS_URL=http://your-cms-url \
+  -e CMS_USER=cms_username \
+  -e CMS_PASSWORD=cms_password \
+  -v ./data:/app/data \
+  --name tg-dl tg-dl
+
+# 或使用 docker-compose
+docker-compose up -d
+```
+
 ### 功能
 
 - 📊 仪表盘：查看资源统计和同步状态
 - 🔍 影视搜索：关键词搜索，一键复制链接
-- 📁 数据库：分页浏览所有资源
 - ⚙️ 同步管理：手动同步、定时任务管理
