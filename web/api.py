@@ -53,15 +53,15 @@ def sync_channel_task(channel_id: str, mode: str):
     state_manager = StateManager()
     crawler = ChannelCrawler(channel_id)
     if mode == 'full':
-      crawler.crawl_all(db, state_manager)
+      new_count = crawler.crawl_all(db, state_manager)
     else:
-      crawler.crawl_incremental(db)
+      new_count = crawler.crawl_incremental(db)
     if CHANNELS[channel_id]['parse_mode'] == 'telegraph':
       parser = TelegraphParser()
       unparsed = db.count_unparsed(channel_id)
       if unparsed > 0:
         parser.parse_batch(db, channel_id, limit=unparsed)
-    add_log('scheduled', channel_id, f'定时任务完成: {channel_name}', 'success')
+    add_log('scheduled', channel_id, f'定时任务完成: {channel_name}，新增 {new_count} 条资源', 'success')
   except Exception as e:
     add_log('scheduled', channel_id, f'定时任务失败: {str(e)}', 'error')
 
@@ -297,9 +297,9 @@ def do_sync(channel_id: str, mode: str):
     crawler = ChannelCrawler(channel_id)
 
     if mode == 'full':
-      crawler.crawl_all(db, state_manager)
+      new_count = crawler.crawl_all(db, state_manager)
     else:
-      crawler.crawl_incremental(db)
+      new_count = crawler.crawl_incremental(db)
 
     if CHANNELS[channel_id]['parse_mode'] == 'telegraph':
       sync_status['message'] = f'正在解析链接...'
@@ -308,8 +308,8 @@ def do_sync(channel_id: str, mode: str):
       if unparsed > 0:
         parser.parse_batch(db, channel_id, limit=unparsed)
 
-    sync_status = {'running': False, 'channel': None, 'message': f'{channel_name} 同步完成'}
-    add_log('sync', channel_id, f'手动同步完成: {channel_name}', 'success')
+    sync_status = {'running': False, 'channel': None, 'message': f'{channel_name} 同步完成，新增 {new_count} 条'}
+    add_log('sync', channel_id, f'手动同步完成: {channel_name}，新增 {new_count} 条资源', 'success')
   except Exception as e:
     sync_status = {'running': False, 'channel': None, 'message': f'同步失败: {str(e)}'}
     add_log('sync', channel_id, f'手动同步失败: {str(e)}', 'error')
