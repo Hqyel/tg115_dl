@@ -158,25 +158,6 @@
                     <img :src="sidebarCollapsed ? 'https://unpkg.com/lucide-static@latest/icons/chevron-right.svg' : 'https://unpkg.com/lucide-static@latest/icons/chevron-left.svg'"
                         class="w-5 h-5 dark:invert opacity-60">
                 </button>
-
-                <!-- 用户信息 -->
-                <div class="p-3 border-t border-slate-200 dark:border-slate-700">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                                {{ username.charAt(0).toUpperCase() }}
-                            </div>
-                            <span v-if="!sidebarCollapsed" class="font-medium text-sm truncate">{{ username }}</span>
-                        </div>
-                        <button v-if="!sidebarCollapsed" @click="logout"
-                            class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                            title="退出登录">
-                            <img src="https://unpkg.com/lucide-static@latest/icons/log-out.svg"
-                                class="w-5 h-5 opacity-60 dark:invert">
-                        </button>
-                    </div>
-                </div>
             </aside>
 
             <!-- 主内容区 -->
@@ -808,7 +789,7 @@
     </style>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="/static/js/app.js?v=2.5"></script>
+    <script src="/static/js/app.js?v=2.6"></script>
 
 </body>
 
