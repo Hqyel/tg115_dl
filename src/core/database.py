@@ -141,6 +141,39 @@ class Database:
       cursor = conn.execute(f"SELECT * FROM {table} ORDER BY message_id DESC LIMIT ?", (limit,))
       return [Resource(**dict(row)) for row in cursor.fetchall()]
 
+  def list_all_channels(self, channel_id: Optional[str] = None, page: int = 1, per_page: int = 20) -> tuple[list[tuple[str, Resource]], int]:
+    """获取所有频道资源（分页），返回 (资源列表, 总数)"""
+    channels = [channel_id] if channel_id else list(CHANNELS.keys())
+    all_results = []
+    total_count = 0
+
+    with sqlite3.connect(self.db_path) as conn:
+      conn.row_factory = sqlite3.Row
+      for ch_id in channels:
+        table = self._get_table_name(ch_id)
+        try:
+          # 获取总数
+          cursor = conn.execute(f"SELECT COUNT(*) FROM {table} WHERE pan_url IS NOT NULL AND pan_url != '' AND pan_url != 'N/A'")
+          total_count += cursor.fetchone()[0]
+          
+          # 获取资源
+          cursor = conn.execute(f"""
+            SELECT * FROM {table}
+            WHERE pan_url IS NOT NULL AND pan_url != '' AND pan_url != 'N/A'
+            ORDER BY created_at DESC, message_id DESC
+          """)
+          for row in cursor.fetchall():
+            all_results.append((ch_id, Resource(**dict(row))))
+        except sqlite3.OperationalError:
+          continue
+
+    # 按 created_at 排序（跨频道）
+    all_results.sort(key=lambda x: (x[1].created_at or '', x[1].message_id), reverse=True)
+    
+    # 分页
+    start = (page - 1) * per_page
+    return all_results[start:start + per_page], total_count
+
   def get_latest_message_id(self, channel_id: str) -> int:
     self._init_table(channel_id)
     table = self._get_table_name(channel_id)

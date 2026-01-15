@@ -29,10 +29,10 @@ createApp({
         const searchResults = ref([]);
         const searchPerformed = ref(false);
         const searchHistory = ref(JSON.parse(localStorage.getItem('searchHistory') || '[]'));
-        const resourceChannel = ref('lsp115');
-        const resourcePage = ref(1);
-        const resourceTotalPages = ref(1);
-        const resources = ref([]);
+        const searchPage = ref(1);
+        const searchTotalPages = ref(1);
+        const searchTotal = ref(0);
+        const searchMode = ref('browse'); // 'browse' or 'search'
         const syncChannel = ref('all');
         const syncStatus = ref({ running: false, message: '' });
 
@@ -158,21 +158,52 @@ createApp({
 
         async function doSearch(query = null) {
             const q = query || searchQuery.value.trim();
-            if (!q) return;
-            searchQuery.value = q;
             loading.value = true;
             searchPerformed.value = true;
             try {
-                let url = `/search?q=${encodeURIComponent(q)}`;
-                if (searchChannel.value) url += `&channel=${searchChannel.value}`;
-                const data = await api(url);
-                searchResults.value = data.resources;
-                // 保存到历史记录
-                addToHistory(q);
+                let url = '/search?';
+                if (q) {
+                    // 搜索模式
+                    searchMode.value = 'search';
+                    searchQuery.value = q;
+                    url += `q=${encodeURIComponent(q)}`;
+                    if (searchChannel.value) url += `&channel=${searchChannel.value}`;
+                    const data = await api(url);
+                    searchResults.value = data.resources;
+                    searchTotal.value = data.count;
+                    searchTotalPages.value = 1; // 搜索模式不分页
+                    searchPage.value = 1;
+                    // 保存到历史记录
+                    addToHistory(q);
+                } else {
+                    // 浏览模式
+                    searchMode.value = 'browse';
+                    url += `page=${searchPage.value}&per_page=20`;
+                    if (searchChannel.value) url += `&channel=${searchChannel.value}`;
+                    const data = await api(url);
+                    searchResults.value = data.resources;
+                    searchTotal.value = data.total;
+                    searchTotalPages.value = data.total_pages;
+                }
             } catch (e) {
                 searchResults.value = [];
+                searchTotal.value = 0;
             } finally {
                 loading.value = false;
+            }
+        }
+
+        function loadDefaultResources(page = 1) {
+            searchPage.value = page;
+            searchQuery.value = '';
+            doSearch();
+        }
+
+        function changePage(delta) {
+            const newPage = searchPage.value + delta;
+            if (newPage >= 1 && newPage <= searchTotalPages.value) {
+                searchPage.value = newPage;
+                doSearch();
             }
         }
 
@@ -191,16 +222,6 @@ createApp({
         function clearHistory() {
             searchHistory.value = [];
             localStorage.removeItem('searchHistory');
-        }
-
-        async function loadResources() {
-            try {
-                const data = await api(`/resources?channel=${resourceChannel.value}&page=${resourcePage.value}`);
-                resources.value = data.resources;
-                resourceTotalPages.value = data.total_pages;
-            } catch (e) {
-                console.error('加载资源失败:', e);
-            }
         }
 
         function copyLink(url) {
@@ -353,13 +374,13 @@ createApp({
             sidebarOpen, sidebarCollapsed,
             dashboard, channels, searchQuery, searchChannel, searchResults, searchPerformed,
             searchHistory, removeFromHistory, clearHistory,
-            resourceChannel, resourcePage, resourceTotalPages, resources,
+            searchPage, searchTotalPages, searchTotal, searchMode,
             syncChannel, syncStatus, syncRunning,
             tasks, newTask,
             logs, logFilter, loadLogs, clearLogs,
             showCardModal, cardModalHtml,
             toasts, confirmDialog, showToast, removeToast, handleConfirm,
-            toggleTheme, login, logout, loadDashboard, doSearch, loadResources, copyLink, syncNow,
+            toggleTheme, login, logout, loadDashboard, doSearch, loadDefaultResources, changePage, copyLink, syncNow,
             loadTasks, addTask, deleteTask, formatDate,
             openCardPreview: (html) => { cardModalHtml.value = html; showCardModal.value = true; },
             closeCardPreview: () => { showCardModal.value = false; cardModalHtml.value = ''; },

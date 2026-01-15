@@ -133,19 +133,12 @@
                             class="w-5 h-5 flex-shrink-0 dark:invert opacity-70">
                         <span v-if="!sidebarCollapsed">仪表盘</span>
                     </a>
-                    <a href="#" @click.prevent="currentPage = 'search'; sidebarOpen = false"
+                    <a href="#" @click.prevent="currentPage = 'search'; loadDefaultResources(); sidebarOpen = false"
                         :class="['flex items-center gap-3 h-11 px-3 rounded-xl font-medium transition-all', 
                      currentPage === 'search' ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
                         <img src="https://unpkg.com/lucide-static@latest/icons/search.svg"
                             class="w-5 h-5 flex-shrink-0 dark:invert opacity-70">
                         <span v-if="!sidebarCollapsed">影视搜索</span>
-                    </a>
-                    <a href="#" @click.prevent="currentPage = 'resources'; loadResources(); sidebarOpen = false"
-                        :class="['flex items-center gap-3 h-11 px-3 rounded-xl font-medium transition-all', 
-                     currentPage === 'resources' ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
-                        <img src="https://unpkg.com/lucide-static@latest/icons/database.svg"
-                            class="w-5 h-5 flex-shrink-0 dark:invert opacity-70">
-                        <span v-if="!sidebarCollapsed">数据库</span>
                     </a>
                     <a href="#" @click.prevent="currentPage = 'sync'; loadTasks(); sidebarOpen = false"
                         :class="['flex items-center gap-3 h-11 px-3 rounded-xl font-medium transition-all', 
@@ -204,7 +197,7 @@
                                 class="w-6 h-6 dark:invert">
                         </button>
                         <h1 class="text-lg lg:text-xl font-semibold">
-                            {{ { dashboard: '仪表盘', search: '影视搜索', resources: '数据库', sync: '同步管理', logs: '运行日志'
+                            {{ { dashboard: '仪表盘', search: '影视搜索', sync: '同步管理', logs: '运行日志'
                             }[currentPage] }}
                         </h1>
                     </div>
@@ -372,9 +365,27 @@
                             </div>
 
                             <div v-if="searchResults.length > 0">
-                                <div class="mb-4"><span class="text-slate-600 dark:text-slate-400">找到 <span
-                                            class="font-semibold text-slate-900 dark:text-white">{{ searchResults.length
-                                            }}</span> 条结果</span></div>
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-slate-600 dark:text-slate-400">
+                                        {{ searchMode === 'search' ? '找到' : '共' }}
+                                        <span class="font-semibold text-slate-900 dark:text-white">{{ searchTotal
+                                            }}</span>
+                                        条资源
+                                        <template v-if="searchMode === 'browse'">
+                                            （第 {{ searchPage }} / {{ searchTotalPages }} 页）
+                                        </template>
+                                    </span>
+                                    <div v-if="searchMode === 'browse'" class="flex items-center gap-2">
+                                        <button @click="changePage(-1)" :disabled="searchPage <= 1"
+                                            class="h-9 px-4 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-50 text-sm">
+                                            上一页
+                                        </button>
+                                        <button @click="changePage(1)" :disabled="searchPage >= searchTotalPages"
+                                            class="h-9 px-4 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-50 text-sm">
+                                            下一页
+                                        </button>
+                                    </div>
+                                </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                                     <div v-for="item in searchResults" :key="item.message_id"
                                         class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-5 border border-slate-200 dark:border-slate-700">
@@ -426,125 +437,28 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- 底部分页 -->
+                                <div v-if="searchMode === 'browse' && searchTotalPages > 1"
+                                    class="flex justify-center mt-6">
+                                    <div class="flex items-center gap-2">
+                                        <button @click="changePage(-1)" :disabled="searchPage <= 1"
+                                            class="h-10 px-5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50">
+                                            上一页
+                                        </button>
+                                        <span class="px-4 text-slate-600 dark:text-slate-400">{{ searchPage }} / {{
+                                            searchTotalPages }}</span>
+                                        <button @click="changePage(1)" :disabled="searchPage >= searchTotalPages"
+                                            class="h-10 px-5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50">
+                                            下一页
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             <div v-else-if="searchPerformed"
                                 class="bg-white dark:bg-slate-800 rounded-xl p-12 border border-slate-200 dark:border-slate-700 text-center">
                                 <img src="https://unpkg.com/lucide-static@latest/icons/search-x.svg"
                                     class="w-12 h-12 mx-auto opacity-20 dark:invert mb-4">
                                 <p class="text-slate-500 dark:text-slate-400">没有找到匹配的资源</p>
-                            </div>
-                        </div>
-
-                        <!-- 数据库页面 -->
-                        <div v-if="currentPage === 'resources'" class="space-y-4 lg:space-y-6">
-                            <div
-                                class="bg-white dark:bg-slate-800 rounded-xl p-3 lg:p-4 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                                <select v-model="resourceChannel" @change="resourcePage = 1; loadResources()"
-                                    class="h-10 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none">
-                                    <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
-                                </select>
-                                <span class="text-sm text-slate-500 dark:text-slate-400 text-center">第 {{ resourcePage
-                                    }} /
-                                    {{ resourceTotalPages }} 页</span>
-                            </div>
-
-                            <!-- 移动端卡片视图 -->
-                            <div class="lg:hidden space-y-3">
-                                <div v-for="item in resources" :key="item.message_id"
-                                    class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                                    <div class="flex items-start gap-3 mb-3">
-                                        <div :class="['w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', 
-                                                  item.pan_url && item.pan_url !== 'N/A' 
-                                                    ? 'bg-emerald-100 dark:bg-emerald-900/30' 
-                                                    : 'bg-amber-100 dark:bg-amber-900/30']">
-                                            <img v-if="item.pan_url && item.pan_url !== 'N/A'"
-                                                src="https://unpkg.com/lucide-static@latest/icons/check.svg"
-                                                class="w-4 h-4">
-                                            <img v-else src="https://unpkg.com/lucide-static@latest/icons/clock.svg"
-                                                class="w-4 h-4">
-                                        </div>
-                                        <div class="flex-1 min-w-0 overflow-hidden">
-                                            <h4 class="font-medium text-sm leading-snug line-clamp-2 break-all">{{
-                                                item.title }}</h4>
-                                            <p v-if="item.tags"
-                                                class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{{
-                                                item.tags }}</p>
-                                        </div>
-                                    </div>
-                                    <div v-if="item.pan_url && item.pan_url !== 'N/A'" class="flex gap-2">
-                                        <button @click="copyLink(item.pan_url)"
-                                            class="flex-1 h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium flex items-center justify-center gap-1.5">
-                                            <img src="https://unpkg.com/lucide-static@latest/icons/copy.svg"
-                                                class="w-4 h-4 invert">
-                                            复制
-                                        </button>
-                                        <a :href="item.pan_url" target="_blank"
-                                            class="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center flex-shrink-0">
-                                            <img src="https://unpkg.com/lucide-static@latest/icons/external-link.svg"
-                                                class="w-4 h-4 opacity-60 dark:invert">
-                                        </a>
-                                    </div>
-                                    <div v-else
-                                        class="h-9 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-400 text-sm flex items-center justify-center">
-                                        暂无链接
-                                    </div>
-                                </div>
-                                <div v-if="resources.length === 0" class="text-center py-12 text-slate-400">
-                                    <img src="https://unpkg.com/lucide-static@latest/icons/inbox.svg"
-                                        class="w-12 h-12 mx-auto opacity-30 dark:invert mb-3">
-                                    暂无数据
-                                </div>
-                            </div>
-
-                            <!-- 桌面端表格 -->
-                            <div
-                                class="hidden lg:block bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                                <table class="w-full">
-                                    <thead>
-                                        <tr class="border-b border-slate-200 dark:border-slate-700">
-                                            <th
-                                                class="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
-                                                标题</th>
-                                            <th
-                                                class="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
-                                                标签</th>
-                                            <th
-                                                class="text-center p-4 text-sm font-semibold text-slate-600 dark:text-slate-400 w-20">
-                                                状态</th>
-                                            <th
-                                                class="text-center p-4 text-sm font-semibold text-slate-600 dark:text-slate-400 w-24">
-                                                操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="item in resources" :key="item.message_id"
-                                            class="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                                            <td class="p-4 max-w-xs truncate font-medium">{{ item.title }}</td>
-                                            <td
-                                                class="p-4 text-slate-500 dark:text-slate-400 text-sm max-w-xs truncate">
-                                                {{
-                                                item.tags }}</td>
-                                            <td class="p-4 text-center">
-                                                <span v-if="item.pan_url && item.pan_url !== 'N/A'"
-                                                    class="text-emerald-500">✓</span>
-                                                <span v-else class="text-amber-400">○</span>
-                                            </td>
-                                            <td class="p-4 text-center">
-                                                <button v-if="item.pan_url && item.pan_url !== 'N/A'"
-                                                    @click="copyLink(item.pan_url)"
-                                                    class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-sm">复制</button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="flex justify-center gap-3">
-                                <button @click="resourcePage--; loadResources()" :disabled="resourcePage <= 1"
-                                    class="h-10 px-5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">上一页</button>
-                                <button @click="resourcePage++; loadResources()"
-                                    :disabled="resourcePage >= resourceTotalPages"
-                                    class="h-10 px-5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">下一页</button>
                             </div>
                         </div>
 
@@ -863,7 +777,7 @@
     </style>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="/static/js/app.js?v=custom_ui_1.0"></script>
+    <script src="/static/js/app.js?v=2.0"></script>
 
 </body>
 

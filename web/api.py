@@ -200,26 +200,55 @@ def get_dashboard():
 def search():
   keyword = request.args.get('q', '').strip()
   channel_id = request.args.get('channel', None)
-
-  if not keyword:
-    return jsonify({'error': '请输入关键词'}), 400
+  page = request.args.get('page', 1, type=int)
+  per_page = min(request.args.get('per_page', 20, type=int), 100)
 
   db = Database()
-  results = db.search(keyword, channel_id if channel_id else None)
-
-  resources = [{
-    'channel_id': ch_id,
-    'channel_name': CHANNELS[ch_id]['name'],
-    'channel_username': CHANNELS[ch_id]['url'].split('/')[-1],
-    'message_id': r.message_id,
-    'title': r.title,
-    'tags': r.tags,
-    'pan_url': r.pan_url,
-    'description': r.description,
-    'raw_html': r.raw_html
-  } for ch_id, r in results]
-
-  return jsonify({'count': len(resources), 'resources': resources})
+  
+  if keyword:
+    # 搜索模式
+    results = db.search(keyword, channel_id if channel_id else None)
+    resources = [{
+      'channel_id': ch_id,
+      'channel_name': CHANNELS[ch_id]['name'],
+      'channel_username': CHANNELS[ch_id]['url'].split('/')[-1],
+      'message_id': r.message_id,
+      'title': r.title,
+      'tags': r.tags,
+      'pan_url': r.pan_url,
+      'description': r.description,
+      'raw_html': r.raw_html,
+      'created_at': r.created_at
+    } for ch_id, r in results]
+    return jsonify({
+      'mode': 'search',
+      'count': len(resources),
+      'resources': resources
+    })
+  else:
+    # 浏览模式：显示所有资源（分页）
+    results, total = db.list_all_channels(channel_id, page, per_page)
+    resources = [{
+      'channel_id': ch_id,
+      'channel_name': CHANNELS[ch_id]['name'],
+      'channel_username': CHANNELS[ch_id]['url'].split('/')[-1],
+      'message_id': r.message_id,
+      'title': r.title,
+      'tags': r.tags,
+      'pan_url': r.pan_url,
+      'description': r.description,
+      'raw_html': r.raw_html,
+      'created_at': r.created_at
+    } for ch_id, r in results]
+    return jsonify({
+      'mode': 'browse',
+      'page': page,
+      'per_page': per_page,
+      'total': total,
+      'total_pages': max(1, (total + per_page - 1) // per_page),
+      'count': len(resources),
+      'resources': resources
+    })
 
 
 @api_bp.route('/resources', methods=['GET'])
@@ -409,6 +438,7 @@ def list_logs():
 
 @api_bp.route('/logs', methods=['DELETE'])
 @login_required
+def delete_logs():
   clear_logs()
   return jsonify({'message': '日志已清空'})
 
