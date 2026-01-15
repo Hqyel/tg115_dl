@@ -148,9 +148,6 @@ createApp({
             try {
                 const data = await api('/channels');
                 channels.value = data.channels;
-                if (channels.value.length > 0) {
-                    resourceChannel.value = channels.value[0].id;
-                }
             } catch (e) {
                 console.error('加载频道失败:', e);
             }
