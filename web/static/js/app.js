@@ -101,6 +101,17 @@ createApp({
             if (token.value) headers['Authorization'] = `Bearer ${token.value}`;
 
             const response = await fetch(`/api${url}`, { ...options, headers });
+
+            // Token 过期或无效，自动登出
+            if (response.status === 401) {
+                token.value = '';
+                isLoggedIn.value = false;
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                showToast('登录已过期，请重新登录', 'error');
+                throw new Error('登录已过期');
+            }
+
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || '请求失败');
             return data;

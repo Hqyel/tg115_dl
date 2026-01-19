@@ -375,10 +375,16 @@
                                                 class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 whitespace-nowrap">{{
                                                 item.channel_name }}</span>
                                         </div>
-                                        <div v-if="item.tags" class="flex flex-wrap gap-1.5 mb-4">
+                                        <div v-if="item.tags" class="flex flex-wrap gap-1.5 mb-3">
                                             <span v-for="tag in item.tags.split(',').slice(0,5)" :key="tag"
                                                 class="px-2 py-0.5 text-xs rounded-md bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400">{{
                                                 tag }}</span>
+                                        </div>
+                                        <div v-if="item.created_at"
+                                            class="text-xs text-slate-400 dark:text-slate-500 mb-3">
+                                            <img src="https://unpkg.com/lucide-static@latest/icons/clock.svg"
+                                                class="w-3 h-3 inline-block mr-1 opacity-60 dark:invert">
+                                            {{ formatDate(item.created_at) }}
                                         </div>
                                         <div class="flex flex-wrap items-center gap-2">
                                             <button v-if="item.pan_url && item.pan_url !== 'N/A'"
@@ -789,7 +795,7 @@
     </style>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="/static/js/app.js?v=2.6"></script>
+    <script src="/static/js/app.js?v=2.7"></script>
 
 </body>
 
