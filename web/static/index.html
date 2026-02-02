@@ -702,6 +702,13 @@
                         :class="['w-5 h-5', currentPage === 'logs' ? '' : 'opacity-60 dark:invert']">
                     <span class="text-xs font-medium">日志</span>
                 </button>
+                <button @click="currentPage = 'history'; loadTransferHistory()"
+                    :class="['flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors',
+                        currentPage === 'history' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400']">
+                    <img src="https://unpkg.com/lucide-static@latest/icons/cloud-upload.svg"
+                        :class="['w-5 h-5', currentPage === 'history' ? '' : 'opacity-60 dark:invert']">
+                    <span class="text-xs font-medium">转存</span>
+                </button>
             </nav>
         </div>
 
