@@ -21,6 +21,7 @@ sync_status = {'running': False, 'channel': None, 'message': ''}
 # 定时任务配置
 DATA_DIR = Path(__file__).parent.parent / "data"
 TASKS_FILE = DATA_DIR / "scheduled_tasks.json"
+TRANSFER_HISTORY_FILE = DATA_DIR / "transfer_history.json"
 _scheduler = None
 _scheduler_started = False
 
@@ -443,6 +444,43 @@ def delete_logs():
   return jsonify({'message': '日志已清空'})
 
 
+# 转存历史管理
+def load_transfer_history():
+  """加载转存历史"""
+  if TRANSFER_HISTORY_FILE.exists():
+    try:
+      with open(TRANSFER_HISTORY_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
+    except:
+      pass
+  return []
+
+
+def save_transfer_history(history: list):
+  """保存转存历史"""
+  DATA_DIR.mkdir(exist_ok=True)
+  # 只保留最近 100 条记录
+  history = history[:100]
+  with open(TRANSFER_HISTORY_FILE, 'w', encoding='utf-8') as f:
+    json.dump(history, f, ensure_ascii=False, indent=2)
+
+
+def add_transfer_record(url: str, title: str = None, status: str = 'success', message: str = None):
+  """添加转存记录"""
+  from datetime import datetime
+  history = load_transfer_history()
+  record = {
+    'url': url,
+    'title': title or url,
+    'status': status,
+    'message': message,
+    'created_at': datetime.now().isoformat()
+  }
+  history.insert(0, record)
+  save_transfer_history(history)
+  return record
+
+
 @api_bp.route('/transfer', methods=['POST'])
 @login_required
 def transfer_resource():
@@ -451,15 +489,34 @@ def transfer_resource():
     return jsonify({'error': '请提供链接'}), 400
 
   url = data['url']
+  title = data.get('title', '')
   if not url:
     return jsonify({'error': '链接不能为空'}), 400
 
   try:
     from src.utils.cms import CloudSyncMediaClient
-    # 从环境变量或配置中获取 CMS 信息
     client = CloudSyncMediaClient()
     result = client.add_share_down(url)
+    # 记录成功的转存
+    add_transfer_record(url, title, 'success', 'CMS 转存任务已添加')
     return jsonify({'message': 'CMS 转存任务已添加', 'result': result})
   except Exception as e:
+    # 记录失败的转存
+    add_transfer_record(url, title, 'error', str(e))
     return jsonify({'error': str(e)}), 400
 
+
+@api_bp.route('/transfer/history', methods=['GET'])
+@login_required
+def get_transfer_history():
+  """获取转存历史"""
+  history = load_transfer_history()
+  return jsonify({'history': history, 'total': len(history)})
+
+
+@api_bp.route('/transfer/history', methods=['DELETE'])
+@login_required
+def clear_transfer_history():
+  """清空转存历史"""
+  save_transfer_history([])
+  return jsonify({'message': '转存历史已清空'})

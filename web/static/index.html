@@ -91,6 +91,13 @@
                                     placeholder="请输入密码">
                             </div>
                         </div>
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" v-model="loginForm.rememberMe"
+                                    class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
+                                <span class="text-sm text-slate-600 dark:text-slate-400">记住密码 (7天)</span>
+                            </label>
+                        </div>
                         <button type="submit" :disabled="loading"
                             class="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                             <svg v-if="loading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
@@ -150,6 +157,13 @@
                             class="w-5 h-5 flex-shrink-0 dark:invert opacity-70">
                         <span v-if="!sidebarCollapsed">运行日志</span>
                     </a>
+                    <a href="#" @click.prevent="currentPage = 'history'; loadTransferHistory(); sidebarOpen = false"
+                        :class="['flex items-center gap-3 h-11 px-3 rounded-xl font-medium transition-all', 
+                     currentPage === 'history' ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50']">
+                        <img src="https://unpkg.com/lucide-static@latest/icons/cloud-upload.svg"
+                            class="w-5 h-5 flex-shrink-0 dark:invert opacity-70">
+                        <span v-if="!sidebarCollapsed">转存记录</span>
+                    </a>
                 </nav>
 
                 <!-- 折叠按钮 -->
@@ -169,7 +183,7 @@
                     <div class="flex items-center gap-4">
 
                         <h1 class="text-lg lg:text-xl font-semibold">
-                            {{ { dashboard: '仪表盘', search: '影视搜索', sync: '同步管理', logs: '运行日志'
+                            {{ { dashboard: '仪表盘', search: '影视搜索', sync: '同步管理', logs: '运行日志', history: '转存记录'
                             }[currentPage] }}
                         </h1>
                     </div>
@@ -412,7 +426,7 @@
                                             </button>
                                             <button
                                                 v-if="item.pan_url && (item.pan_url.includes('115.com') || item.pan_url.includes('115cdn.com'))"
-                                                @click="transferToCms(item.pan_url)"
+                                                @click="transferToCms(item.pan_url, item.title)"
                                                 class="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-200 dark:hover:bg-orange-900/50 text-orange-600 dark:text-orange-400 text-sm font-medium">
                                                 <img src="https://unpkg.com/lucide-static@latest/icons/cloud-upload.svg"
                                                     class="w-4 h-4">转存
@@ -589,6 +603,67 @@
                                     <img src="https://unpkg.com/lucide-static@latest/icons/inbox.svg"
                                         class="w-12 h-12 mx-auto opacity-30 dark:invert mb-3">
                                     暂无日志记录
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 转存记录页面 -->
+                        <div v-if="currentPage === 'history'" class="space-y-6">
+                            <div
+                                class="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                                            <img src="https://unpkg.com/lucide-static@latest/icons/cloud-upload.svg"
+                                                class="w-5 h-5 dark:invert opacity-70">
+                                        </div>
+                                        <div>
+                                            <h3 class="font-semibold">CMS 转存历史</h3>
+                                            <p class="text-sm text-slate-500 dark:text-slate-400">共 {{
+                                                transferHistory.length }} 条记录</p>
+                                        </div>
+                                    </div>
+                                    <button v-if="transferHistory.length > 0" @click="clearTransferHistory"
+                                        class="px-4 h-9 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-200 dark:hover:bg-red-900/50">
+                                        清空记录
+                                    </button>
+                                </div>
+                                <div v-if="transferHistory.length > 0" class="space-y-3">
+                                    <div v-for="(record, index) in transferHistory" :key="index" :class="['p-4 rounded-xl border', 
+                                            record.status === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30' :
+                                            'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30']">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="flex items-start gap-3 flex-1 min-w-0">
+                                                <img v-if="record.status === 'success'"
+                                                    src="https://unpkg.com/lucide-static@latest/icons/check-circle.svg"
+                                                    class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5">
+                                                <img v-else
+                                                    src="https://unpkg.com/lucide-static@latest/icons/x-circle.svg"
+                                                    class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5">
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="font-medium text-sm truncate" :title="record.title">{{
+                                                        record.title }}</div>
+                                                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                                        {{ formatDate(record.created_at) }}
+                                                    </div>
+                                                    <div v-if="record.message" class="text-xs text-slate-400 mt-1">{{
+                                                        record.message }}</div>
+                                                </div>
+                                            </div>
+                                            <a v-if="record.url" :href="record.url" target="_blank"
+                                                class="flex-shrink-0 px-3 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs flex items-center gap-1">
+                                                <img src="https://unpkg.com/lucide-static@latest/icons/external-link.svg"
+                                                    class="w-3.5 h-3.5 opacity-60 dark:invert">
+                                                打开
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="text-center py-12 text-slate-400">
+                                    <img src="https://unpkg.com/lucide-static@latest/icons/inbox.svg"
+                                        class="w-12 h-12 mx-auto opacity-30 dark:invert mb-3">
+                                    暂无转存记录
                                 </div>
                             </div>
                         </div>
@@ -795,7 +870,7 @@
     </style>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="/static/js/app.js?v=2.7"></script>
+    <script src="/static/js/app.js?v=2.8"></script>
 
 </body>
 

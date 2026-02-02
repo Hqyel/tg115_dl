@@ -31,8 +31,12 @@ def verify_password(password: str, stored_hash: str, salt: str) -> bool:
   return hmac.compare_digest(calculated_hash, stored_hash)
 
 
-def create_token(user_id: int, username: str) -> str:
-  expiration_hours = current_app.config.get('JWT_EXPIRATION_HOURS', 24)
+def create_token(user_id: int, username: str, remember_me: bool = False) -> str:
+  # 记住密码：7天，否则24小时
+  if remember_me:
+    expiration_hours = 24 * 7  # 7 days
+  else:
+    expiration_hours = current_app.config.get('JWT_EXPIRATION_HOURS', 24)
   payload = {
     'user_id': user_id,
     'username': username,
@@ -110,6 +114,7 @@ def login():
     return jsonify({'error': '请提供登录信息'}), 400
   username = data.get('username', '').strip()
   password = data.get('password', '')
+  remember_me = data.get('remember_me', False)
   if not username or not password:
     return jsonify({'error': '用户名和密码不能为空'}), 400
 
@@ -119,7 +124,7 @@ def login():
     user = cursor.fetchone()
     if not user or not verify_password(password, user['password_hash'], user['salt']):
       return jsonify({'error': '用户名或密码错误'}), 401
-    token = create_token(user['id'], user['username'])
+    token = create_token(user['id'], user['username'], remember_me)
     return jsonify({'token': token, 'username': user['username']})
 
 

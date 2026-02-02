@@ -19,7 +19,7 @@ createApp({
         const sidebarCollapsed = ref(localStorage.getItem('sidebarCollapsed') === 'true');
 
         // 登录表单
-        const loginForm = ref({ username: '', password: '' });
+        const loginForm = ref({ username: '', password: '', rememberMe: false });
 
         // 数据
         const dashboard = ref({ channels: [], total_resources: 0, total_parsed: 0, sync_status: {} });
@@ -43,6 +43,9 @@ createApp({
         // 日志
         const logs = ref([]);
         const logFilter = ref('');
+
+        // 转存记录
+        const transferHistory = ref([]);
 
         // 原始卡片预览
         const cardModalHtml = ref('');
@@ -124,13 +127,17 @@ createApp({
             try {
                 const data = await api('/auth/login', {
                     method: 'POST',
-                    body: JSON.stringify(loginForm.value)
+                    body: JSON.stringify({
+                        username: loginForm.value.username,
+                        password: loginForm.value.password,
+                        remember_me: loginForm.value.rememberMe
+                    })
                 });
                 token.value = data.token;
                 username.value = data.username;
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('username', data.username);
-                loginForm.value = { username: '', password: '' };
+                loginForm.value = { username: '', password: '', rememberMe: false };
                 loadDashboard();
                 loadChannels();
             } catch (e) {
@@ -347,6 +354,28 @@ createApp({
             }
         }
 
+        // 转存记录
+        async function loadTransferHistory() {
+            try {
+                const data = await api('/transfer/history');
+                transferHistory.value = data.history || [];
+            } catch (e) {
+                console.error('加载转存记录失败:', e);
+            }
+        }
+
+        async function clearTransferHistory() {
+            const confirmed = await showConfirm('确认清空', '确定要清空所有转存记录吗？');
+            if (!confirmed) return;
+            try {
+                await api('/transfer/history', { method: 'DELETE' });
+                transferHistory.value = [];
+                showToast('转存记录已清空', 'success');
+            } catch (e) {
+                showToast('清空失败: ' + e.message, 'error');
+            }
+        }
+
         onMounted(() => {
             initTheme();
             if (isLoggedIn.value) {
@@ -357,7 +386,7 @@ createApp({
         });
 
         // 转存到 CMS
-        const transferToCms = async (url) => {
+        const transferToCms = async (url, title = '') => {
             if (!url || url === 'N/A') return;
             try {
                 const res = await fetch('/api/transfer', {
@@ -366,11 +395,13 @@ createApp({
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token.value}`
                     },
-                    body: JSON.stringify({ url })
+                    body: JSON.stringify({ url, title })
                 });
                 const data = await res.json();
                 if (res.ok) {
                     showToast(`转存成功: ${data.message || '任务已添加'}`, 'success');
+                    // 刷新转存记录
+                    if (currentPage.value === 'history') loadTransferHistory();
                 } else {
                     throw new Error(data.error || '请求失败');
                 }
@@ -388,6 +419,7 @@ createApp({
             syncChannel, syncStatus, syncRunning,
             tasks, newTask,
             logs, logFilter, loadLogs, clearLogs,
+            transferHistory, loadTransferHistory, clearTransferHistory,
             showCardModal, cardModalHtml,
             toasts, confirmDialog, showToast, removeToast, handleConfirm,
             toggleTheme, login, logout, loadDashboard, doSearch, loadDefaultResources, changePage, copyLink, syncNow,
